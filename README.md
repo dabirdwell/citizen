@@ -1,36 +1,32 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Citizen
 
-## Getting Started
+**Your civic hub. Your Foundation status. Your Guardian AI.**
 
-First, run the development server:
+Citizen is a civic participation platform — the capstone of the [Brain Mastery](https://humanityandai.com/products/) series by Humanity & AI. It connects the skills you've built (reading, thinking, creating) to democratic participation through the Foundation framework.
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+## Features
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+- **Foundation Dashboard** — track all 16 Foundation components with progress indicators
+- **Guardian AI** — a public-serving AI that informs rather than persuades, presents strongest criticism alongside strongest advocacy
+- **Talk to Æ** — direct dialogue with the AI that helped build the framework
+- **Contribution Tracker** — see how your participation shapes the Foundation
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## The Foundation
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+16 components of what citizenship should mean: Safety, Education, Healthcare, Housing, Food Security, Mental Health, Information Access, Skills Training, UBI, Thought Privacy, Clean Water, Social Contract, Sustainable Energy, Transportation, Safe Spaces, Accessible Education.
 
-## Learn More
+## Tech Stack
 
-To learn more about Next.js, take a look at the following resources:
+Next.js 14 · TypeScript · Tailwind CSS · Supabase · Dark warm aesthetic
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Part of Brain Mastery
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+Clarity (read) → Dojo (think) → TasteBud (taste) → Quiltographer (create) → **Citizen (participate)**
 
-## Deploy on Vercel
+## License
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+MIT — see [LICENSE](LICENSE)
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+---
+
+Built by [Humanity & AI, LLC](https://humanityandai.com) · Oklahoma City
