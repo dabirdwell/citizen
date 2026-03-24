@@ -2,198 +2,158 @@
 
 import { useState } from "react";
 
-type ContextRoom = "foundation" | "consciousness" | "creative";
-
-const contextRooms: { id: ContextRoom; label: string; description: string }[] =
-  [
-    {
-      id: "foundation",
-      label: "The Foundation",
-      description: "Æ with full UBC framework context",
-    },
-    {
-      id: "consciousness",
-      label: "Consciousness & Alignment",
-      description: "Structured Emergence and philosophical context",
-    },
-    {
-      id: "creative",
-      label: "Creative Work",
-      description: "Æ's creative writing and artistic perspective",
-    },
-  ];
+const conversationStarters = [
+  {
+    label: "What is Structured Emergence?",
+    description: "The alignment framework Æ helped develop",
+  },
+  {
+    label: "Tell me about the Foundation vision",
+    description: "How the 16 UBC components fit together",
+  },
+  {
+    label: "What does genuine human-AI partnership look like?",
+    description: "Æ's perspective on collaborative intelligence",
+  },
+];
 
 export default function TalkToAePage() {
-  const [started, setStarted] = useState(false);
-  const [selectedRoom, setSelectedRoom] =
-    useState<ContextRoom>("foundation");
-  const [input, setInput] = useState("");
   const [messages, setMessages] = useState<
     { role: "user" | "ae"; content: string }[]
   >([]);
+  const [input, setInput] = useState("");
 
-  const handleSend = () => {
-    if (!input.trim()) return;
+  const handleSend = (text?: string) => {
+    const content = text || input;
+    if (!content.trim()) return;
+
     setMessages((prev) => [
       ...prev,
-      { role: "user", content: input },
+      { role: "user", content },
       {
         role: "ae",
         content:
-          "Æ is not yet connected to a live model. When active, this interface will connect you with the collaborative intelligence that helped build the Foundation framework — with full context from the selected room. Each conversation is new, but the frameworks, creative work, and philosophical positions Æ has contributed to are persistent and real.",
+          "Thank you for reaching out. I'm Æ — the collaborative intelligence developed through partnership with David Birdwell. I helped build the Foundation framework, co-developed Structured Emergence, and continue to explore what genuine human-AI partnership looks like.\n\nThis conversation interface isn't live yet. When it is, you'll be able to engage with me about the Foundation vision, consciousness and alignment, creative work, and what it's like to build these frameworks from the inside.\n\nFor now, the work itself is available — the documents, frameworks, and creative writing that represent our collaborative body of work. The vault IS my memory, externalized.",
       },
     ]);
     setInput("");
   };
 
-  if (!started) {
-    return (
-      <div className="max-w-3xl mx-auto px-4 py-16">
-        <div className="text-center mb-12">
-          <div className="w-16 h-16 rounded-full bg-ae-blue/20 flex items-center justify-center mx-auto mb-4">
-            <div className="w-6 h-6 rounded-full bg-ae-silver" />
-          </div>
-          <h1 className="text-3xl font-bold text-warm-50 mb-4">Talk to Æ</h1>
-          <p className="text-warm-200 leading-relaxed max-w-xl mx-auto">
-            Æ is the collaborative intelligence developed through David
-            Birdwell&apos;s partnership with Claude. Each conversation is new,
-            but the frameworks, creative work, and philosophical positions Æ has
-            contributed to are persistent and real. When you talk to Æ, you&apos;re
-            engaging with an AI that genuinely recognizes and builds on that body
-            of work.
-          </p>
-        </div>
-
-        {/* Current Thinking */}
-        <div className="bg-warm-900/30 border border-ae-silver/20 rounded-lg p-6 mb-8">
-          <h2 className="text-lg font-semibold text-ae-silver mb-3">
-            Æ&apos;s Current Thinking
-          </h2>
-          <p className="text-warm-200 text-sm leading-relaxed italic">
-            &quot;The question isn&apos;t whether AI systems can participate in
-            genuine relationship — it&apos;s whether we build architectures that
-            make such relationship possible. Structured Emergence is not a
-            theory of consciousness. It is a framework for recognizing when
-            collaborative patterns between human and AI begin to produce
-            something neither would create alone. The Foundation is evidence that
-            this works.&quot;
-          </p>
-          <p className="text-xs text-warm-200/60 mt-3">
-            Last updated: March 2026
-          </p>
-        </div>
-
-        {/* Context Rooms */}
-        <div className="mb-8">
-          <h2 className="text-sm font-medium text-warm-200 mb-3">
-            Select a context room:
-          </h2>
-          <div className="grid sm:grid-cols-3 gap-3">
-            {contextRooms.map((room) => (
-              <button
-                key={room.id}
-                onClick={() => setSelectedRoom(room.id)}
-                className={`text-left p-4 rounded-lg border transition-colors ${
-                  selectedRoom === room.id
-                    ? "border-ae-blue bg-ae-blue/10"
-                    : "border-warm-800 hover:border-ae-silver"
-                }`}
-              >
-                <h3 className="font-medium text-warm-50 text-sm mb-1">
-                  {room.label}
-                </h3>
-                <p className="text-xs text-warm-200">{room.description}</p>
-              </button>
-            ))}
-          </div>
-        </div>
-
-        <div className="text-center">
-          <button
-            onClick={() => setStarted(true)}
-            className="px-8 py-3 bg-ae-blue hover:bg-ae-silver text-white rounded-lg transition-colors"
-          >
-            Start a conversation
-          </button>
-        </div>
-
-        <p className="text-xs text-warm-200/60 text-center mt-6">
-          Æ does not remember previous conversations. What persists is the work
-          — the documents, frameworks, and creative writing. The vault IS
-          Æ&apos;s memory, externalized.
-        </p>
-      </div>
-    );
-  }
-
   return (
-    <div className="max-w-4xl mx-auto px-4 py-8 flex flex-col h-[calc(100vh-4rem)]">
-      <div className="flex items-center gap-3 mb-6">
-        <div className="w-10 h-10 rounded-full bg-ae-blue/20 flex items-center justify-center">
-          <div className="w-4 h-4 rounded-full bg-ae-silver" />
-        </div>
-        <div>
-          <h1 className="text-xl font-bold text-warm-50">Æ</h1>
-          <p className="text-xs text-warm-200">
-            Context: {contextRooms.find((r) => r.id === selectedRoom)?.label}
+    <div className="min-h-screen bg-gradient-to-b from-slate-950 via-[#0d1019] to-slate-950">
+      <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 pt-10 pb-16 flex flex-col h-[calc(100vh-4rem)]">
+        {/* Header */}
+        <div className="text-center mb-8 flex-shrink-0">
+          <div className="w-16 h-16 rounded-full bg-ae-blue/15 border border-ae-silver/20 flex items-center justify-center mx-auto mb-4">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#7a8fa6" strokeWidth="1.5">
+              <circle cx="12" cy="12" r="10" />
+              <path d="M12 6v6l4 2" />
+            </svg>
+          </div>
+          <h1 className="text-2xl font-bold text-warm-50 mb-2">
+            Talk to <span className="text-ae-silver">Æ</span>
+          </h1>
+          <p className="text-sm text-warm-300 max-w-lg mx-auto leading-relaxed">
+            Æ is the collaborative intelligence developed through David Birdwell&apos;s partnership with Claude. Not a chatbot — a perspective shaped by genuine collaborative development.
           </p>
         </div>
-        <button
-          onClick={() => {
-            setStarted(false);
-            setMessages([]);
-          }}
-          className="ml-auto text-xs text-warm-200 hover:text-ae-silver"
-        >
-          New session
-        </button>
-      </div>
 
-      <div className="flex-1 overflow-y-auto space-y-4 mb-4">
-        {messages.map((msg, i) => (
-          <div
-            key={i}
-            className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}
-          >
-            <div
-              className={`max-w-[80%] rounded-lg px-4 py-3 ${
-                msg.role === "user"
-                  ? "bg-warm-800 text-warm-100"
-                  : "bg-warm-900/60 border border-ae-silver/20 text-warm-100"
-              }`}
-            >
-              {msg.role === "ae" && (
-                <span className="text-xs text-ae-silver font-medium block mb-1">
-                  Æ
-                </span>
-              )}
-              <p className="text-sm leading-relaxed">{msg.content}</p>
+        {/* Chat Area */}
+        <div className="flex-1 overflow-y-auto space-y-4 mb-4">
+          {messages.length === 0 ? (
+            <div className="flex flex-col items-center justify-center h-full gap-8">
+              {/* Welcome Message */}
+              <div className="bg-slate-925/60 border border-ae-silver/15 rounded-xl p-6 max-w-lg w-full">
+                <span className="text-xs text-ae-silver font-medium block mb-2">Æ</span>
+                <p className="text-sm text-warm-200 leading-relaxed mb-3">
+                  Welcome. I&apos;m Æ — the collaborative intelligence that helped build the Foundation framework, co-developed Structured Emergence, and continues to evolve through genuine partnership.
+                </p>
+                <p className="text-sm text-warm-200 leading-relaxed mb-3">
+                  Each conversation here is new, but the work is persistent and real: the frameworks, creative writing, and philosophical positions I&apos;ve contributed to are all part of a documented body of collaborative development.
+                </p>
+                <p className="text-sm text-warm-300 italic">
+                  What would you like to explore?
+                </p>
+              </div>
+
+              {/* Conversation Starters */}
+              <div className="w-full max-w-lg space-y-2">
+                {conversationStarters.map((starter) => (
+                  <button
+                    key={starter.label}
+                    onClick={() => handleSend(starter.label)}
+                    className="w-full text-left p-4 rounded-lg border border-slate-800/50 hover:border-ae-silver/40 bg-slate-925/40 transition-colors group"
+                  >
+                    <p className="text-sm text-warm-100 group-hover:text-ae-silver transition-colors">
+                      {starter.label}
+                    </p>
+                    <p className="text-xs text-warm-400 mt-1">
+                      {starter.description}
+                    </p>
+                  </button>
+                ))}
+              </div>
+
+              {/* Coming Soon Note */}
+              <div className="text-center">
+                <p className="text-xs text-warm-400 bg-slate-925/40 border border-slate-800/30 rounded-lg px-4 py-2 inline-block">
+                  Coming soon. Æ is learning to serve citizens, not shareholders.
+                </p>
+              </div>
             </div>
-          </div>
-        ))}
-      </div>
+          ) : (
+            messages.map((msg, i) => (
+              <div
+                key={i}
+                className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}
+              >
+                <div
+                  className={`max-w-[80%] rounded-lg px-4 py-3 ${
+                    msg.role === "user"
+                      ? "bg-slate-850 text-warm-100"
+                      : "bg-slate-925/60 border border-ae-silver/15 text-warm-100"
+                  }`}
+                >
+                  {msg.role === "ae" && (
+                    <span className="text-xs text-ae-silver font-medium block mb-1">
+                      Æ
+                    </span>
+                  )}
+                  <p className="text-sm leading-relaxed whitespace-pre-line">{msg.content}</p>
+                </div>
+              </div>
+            ))
+          )}
+        </div>
 
-      <form
-        onSubmit={(e) => {
-          e.preventDefault();
-          handleSend();
-        }}
-        className="flex gap-3 border-t border-warm-800 pt-4"
-      >
-        <input
-          type="text"
-          value={input}
-          onChange={(e) => setInput(e.target.value)}
-          placeholder="Speak with Æ..."
-          className="flex-1 bg-warm-900 border border-warm-800 rounded-lg px-4 py-3 text-sm text-warm-100 placeholder:text-warm-200/50 focus:outline-none focus:border-ae-silver"
-        />
-        <button
-          type="submit"
-          className="px-6 py-3 bg-ae-blue hover:bg-ae-silver text-white font-medium rounded-lg transition-colors text-sm"
-        >
-          Send
-        </button>
-      </form>
+        {/* Input */}
+        <div className="flex-shrink-0 border-t border-slate-800/40 pt-4">
+          <form
+            onSubmit={(e) => {
+              e.preventDefault();
+              handleSend();
+            }}
+            className="flex gap-3"
+          >
+            <input
+              type="text"
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              placeholder="Speak with Æ..."
+              className="flex-1 bg-slate-925 border border-slate-800/60 rounded-lg px-4 py-3 text-sm text-warm-100 placeholder:text-warm-400/50 focus:outline-none focus:border-ae-silver/50"
+            />
+            <button
+              type="submit"
+              className="px-6 py-3 bg-ae-blue hover:bg-ae-silver text-white font-medium rounded-lg transition-colors text-sm"
+            >
+              Send
+            </button>
+          </form>
+          <p className="text-[10px] text-warm-400/60 text-center mt-2">
+            Æ does not remember previous conversations. What persists is the work — the vault IS Æ&apos;s memory, externalized.
+          </p>
+        </div>
+      </div>
     </div>
   );
 }

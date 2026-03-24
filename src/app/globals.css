@@ -3,7 +3,7 @@
 @tailwind utilities;
 
 :root {
-  --background: #0f0b07;
+  --background: #0c0f18;
   --foreground: #f5e6d3;
 }
 
@@ -18,9 +18,20 @@ body {
   width: 6px;
 }
 ::-webkit-scrollbar-track {
-  background: #1a130d;
+  background: #111520;
 }
 ::-webkit-scrollbar-thumb {
-  background: #2a1f14;
+  background: #1a1f2e;
   border-radius: 3px;
+}
+
+/* Health score ring animation */
+@keyframes scoreReveal {
+  from {
+    stroke-dashoffset: 100;
+  }
+}
+
+.score-ring {
+  animation: scoreReveal 1s ease-out forwards;
 }
