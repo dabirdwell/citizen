@@ -10,7 +10,7 @@ const geistSans = localFont({
 });
 
 export const metadata: Metadata = {
-  title: "Citizen — Your Seat at the Table",
+  title: "Citizen — Your Civic Dashboard",
   description:
     "Civic hub of the Foundation for Humanity and AI. Track Foundation progress, contribute, and engage with Guardian AI.",
 };

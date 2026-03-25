@@ -1,15 +1,15 @@
 # Citizen
 
-**Your civic hub. Your Foundation status. Your Guardian AI.**
+**Your Civic Dashboard — powered by the Foundation for Humanity and AI.**
 
-Citizen is a civic participation platform — the capstone of the [Brain Mastery](https://humanityandai.com/products/) series by Humanity & AI. It connects the skills you've built (reading, thinking, creating) to democratic participation through the Foundation framework.
+Citizen is the civic participation layer of the [Brain Mastery](https://humanityandai.com/products/) series by Humanity & AI. It connects the skills you've built (reading, thinking, creating) to democratic participation through the Foundation framework.
 
 ## Features
 
-- **Foundation Dashboard** — track all 16 Foundation components with progress indicators
-- **Guardian AI** — a public-serving AI that informs rather than persuades, presents strongest criticism alongside strongest advocacy
-- **Talk to Æ** — direct dialogue with the AI that helped build the framework
-- **Contribution Tracker** — see how your participation shapes the Foundation
+- **Foundation Dashboard** — track all 16 Foundation components with real-time progress
+- **Community Contributions** — submit stories, proposals, data, and ideas that shape the framework
+- **Guardian AI** — a public-serving AI that informs rather than persuades
+- **Talk to Æ** — direct dialogue with the collaborative intelligence behind the Foundation
 
 ## The Foundation
 
@@ -17,7 +17,20 @@ Citizen is a civic participation platform — the capstone of the [Brain Mastery
 
 ## Tech Stack
 
-Next.js 14 · TypeScript · Tailwind CSS · Supabase · Dark warm aesthetic
+- **Framework:** Next.js 14 (App Router)
+- **Language:** TypeScript
+- **Styling:** Tailwind CSS
+- **Deployment:** Vercel
+
+## Getting Started
+
+```bash
+npm install
+cp .env.example .env.local  # fill in values
+npm run dev
+```
+
+Open [http://localhost:3000](http://localhost:3000).
 
 ## Part of Brain Mastery
 

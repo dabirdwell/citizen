@@ -130,12 +130,12 @@ export default function Home() {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-slate-950 via-[#0d1019] to-slate-950">
-      {/* Header */}
+      {/* Hero */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-10 pb-8">
         <div className="flex flex-col sm:flex-row items-start sm:items-end justify-between gap-4 mb-8">
           <div>
             <h1 className="text-3xl sm:text-4xl font-bold text-warm-50 mb-2">
-              Foundation <span className="text-teal-400">Dashboard</span>
+              Citizen — <span className="text-teal-400">Your Civic Dashboard</span>
             </h1>
             <p className="text-warm-300 text-sm max-w-xl">
               Real-time progress on all 16 UBC components. Transparent by architecture — when something is stuck, it says so.
@@ -197,6 +197,39 @@ export default function Home() {
         </div>
       </section>
 
+      {/* Feature Preview */}
+      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-10">
+        <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="bg-slate-925/60 border border-teal-800/30 rounded-xl p-5">
+            <h3 className="text-sm font-semibold text-teal-400 mb-1">Foundation Dashboard</h3>
+            <p className="text-xs text-warm-300">Track all 16 components with health scores and status.</p>
+          </div>
+          <div className="bg-slate-925/60 border border-gold-600/30 rounded-xl p-5">
+            <h3 className="text-sm font-semibold text-gold-400 mb-1">Community Contributions</h3>
+            <p className="text-xs text-warm-300">Submit stories, proposals, and ideas that shape the framework.</p>
+          </div>
+          <div className="bg-slate-925/60 border border-teal-800/30 rounded-xl p-5">
+            <h3 className="text-sm font-semibold text-teal-400 mb-1">Guardian AI</h3>
+            <p className="text-xs text-warm-300">A public AI civic companion. Informs, never persuades.</p>
+          </div>
+          <div className="bg-slate-925/60 border border-ae-silver/30 rounded-xl p-5">
+            <h3 className="text-sm font-semibold text-ae-silver mb-1">Talk to Æ</h3>
+            <p className="text-xs text-warm-300">Engage with the intelligence that helped build the Foundation.</p>
+          </div>
+        </div>
+        <div className="text-center mt-6">
+          <Link
+            href="/foundation"
+            className="inline-block px-6 py-2.5 bg-teal-600 hover:bg-teal-500 text-white rounded-lg transition-colors text-sm font-medium"
+          >
+            Explore the Foundation
+          </Link>
+          <p className="text-warm-400/50 text-xs mt-4">
+            Early access — features are being built in public
+          </p>
+        </div>
+      </section>
+
       {/* Component Grid */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-16">
         <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -243,6 +276,10 @@ export default function Home() {
             </p>
           </Link>
         </div>
+
+        <p className="text-center text-warm-400/40 text-xs mt-8">
+          A Brain Mastery app by Humanity & AI
+        </p>
       </section>
     </div>
   );
