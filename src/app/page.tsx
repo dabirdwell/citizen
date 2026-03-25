@@ -1,7 +1,11 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
 import { foundationComponents, statusColors, statusLabels, type FoundationComponent } from "@/data/foundation-components";
+import { activityFeed, formatRelativeTime, activityTypeIcons, activityTypeColors } from "@/data/activity-feed";
+
+/* ─── Icons ─── */
 
 function ComponentIcon({ icon, className }: { icon: string; className?: string }) {
   const cls = className || "w-6 h-6";
@@ -45,6 +49,8 @@ function ComponentIcon({ icon, className }: { icon: string; className?: string }
   }
 }
 
+/* ─── Health Score Ring (small, for cards) ─── */
+
 function HealthScoreRing({ score }: { score: number }) {
   const circumference = 2 * Math.PI * 16;
   const offset = circumference - (score / 100) * circumference;
@@ -76,13 +82,54 @@ function HealthScoreRing({ score }: { score: number }) {
   );
 }
 
+/* ─── Foundation Health Gauge (large, hero) ─── */
+
+function FoundationHealthGauge({ score }: { score: number }) {
+  const circumference = 2 * Math.PI * 54;
+  const offset = circumference - (score / 100) * circumference;
+  const color =
+    score >= 70 ? "#14b8a6" :
+    score >= 40 ? "#d4a047" :
+    "#6b7280";
+
+  return (
+    <div className="relative w-36 h-36 flex-shrink-0">
+      <svg width="144" height="144" viewBox="0 0 120 120">
+        <circle cx="60" cy="60" r="54" fill="none" stroke="#1a1f2e" strokeWidth="6" />
+        <circle
+          cx="60" cy="60" r="54"
+          fill="none"
+          stroke={color}
+          strokeWidth="6"
+          strokeLinecap="round"
+          strokeDasharray={circumference}
+          strokeDashoffset={offset}
+          className="score-ring"
+          transform="rotate(-90 60 60)"
+          style={{ filter: `drop-shadow(0 0 8px ${color}40)` }}
+        />
+      </svg>
+      <div className="absolute inset-0 flex flex-col items-center justify-center">
+        <span className="text-3xl font-bold" style={{ color }}>{score}</span>
+        <span className="text-[10px] text-warm-400 uppercase tracking-wider">Health</span>
+      </div>
+    </div>
+  );
+}
+
+/* ─── Component Card (enhanced) ─── */
+
 function ComponentCard({ component }: { component: FoundationComponent }) {
   return (
     <a
       href={`https://humanityandai.com/foundation/${component.slug}`}
       target="_blank"
       rel="noopener noreferrer"
-      className="group block bg-slate-925/80 border border-slate-800/50 hover:border-teal-700/60 rounded-xl p-5 transition-all duration-200 hover:bg-slate-925"
+      className={`group block bg-slate-925/80 border rounded-xl p-5 transition-all duration-200 hover:bg-slate-925 ${
+        component.hasRecentActivity
+          ? "border-teal-800/40 hover:border-teal-600/60 active-glow"
+          : "border-slate-800/50 hover:border-teal-700/60"
+      }`}
     >
       <div className="flex items-start justify-between mb-3">
         <div className="flex items-center gap-3">
@@ -104,9 +151,16 @@ function ComponentCard({ component }: { component: FoundationComponent }) {
       </p>
 
       <div className="flex items-center justify-between">
-        <div className="flex items-center gap-1.5">
-          <div className={`w-1.5 h-1.5 rounded-full ${statusColors[component.status]}`} />
-          <span className="text-[10px] text-warm-400">{statusLabels[component.status]}</span>
+        <div className="flex items-center gap-3">
+          <div className="flex items-center gap-1.5">
+            <div className={`w-1.5 h-1.5 rounded-full ${statusColors[component.status]}`} />
+            <span className="text-[10px] text-warm-400">{statusLabels[component.status]}</span>
+          </div>
+          {component.recentContributors > 0 && (
+            <span className="text-[10px] text-warm-500">
+              {component.recentContributors} contributor{component.recentContributors !== 1 ? "s" : ""}
+            </span>
+          )}
         </div>
         <span className="text-[10px] text-warm-400 opacity-0 group-hover:opacity-100 transition-opacity">
           View on H&AI →
@@ -116,22 +170,36 @@ function ComponentCard({ component }: { component: FoundationComponent }) {
   );
 }
 
+/* ─── Sort types ─── */
+type SortMode = "most_active" | "needs_attention";
+
+/* ─── Page ─── */
+
 export default function Home() {
+  const [sortMode, setSortMode] = useState<SortMode>("most_active");
+
   const avgHealth = Math.round(
     foundationComponents.reduce((sum, c) => sum + c.healthScore, 0) / foundationComponents.length
   );
 
-  const counts = {
-    live: foundationComponents.filter((c) => c.status === "live").length,
-    active: foundationComponents.filter((c) => c.status === "active").length,
-    planning: foundationComponents.filter((c) => c.status === "planning").length,
-    not_started: foundationComponents.filter((c) => c.status === "not_started").length,
-  };
+  // Sub-scores for breakdown
+  const totalContributors = foundationComponents.reduce((sum, c) => sum + c.recentContributors, 0);
+  const communityEngagement = Math.min(100, Math.round((totalContributors / 80) * 100)); // 80 contributors = 100
+  const contentDepth = Math.round(
+    foundationComponents.reduce((sum, c) => sum + c.progressPct, 0) / foundationComponents.length * 2.5
+  );
+  const activeContributorScore = Math.min(100, Math.round((totalContributors / 50) * 100));
+
+  // Sorted components
+  const sortedComponents = [...foundationComponents].sort((a, b) => {
+    if (sortMode === "most_active") return b.recentContributors - a.recentContributors || b.healthScore - a.healthScore;
+    return a.healthScore - b.healthScore;
+  });
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-slate-950 via-[#0d1019] to-slate-950">
       {/* Hero */}
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-10 pb-8">
+      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-10 pb-6">
         <div className="flex flex-col sm:flex-row items-start sm:items-end justify-between gap-4 mb-8">
           <div>
             <h1 className="text-3xl sm:text-4xl font-bold text-warm-50 mb-2">
@@ -142,100 +210,137 @@ export default function Home() {
             </p>
           </div>
           <div className="flex items-center gap-6">
-            <Link
-              href="/contributions"
-              className="text-sm text-gold-400 hover:text-gold-500 transition-colors"
-            >
+            <Link href="/contributions" className="text-sm text-gold-400 hover:text-gold-500 transition-colors">
               Share Your Voice →
             </Link>
-            <Link
-              href="/guardian"
-              className="text-sm text-teal-400 hover:text-teal-500 transition-colors"
-            >
+            <Link href="/guardian" className="text-sm text-teal-400 hover:text-teal-500 transition-colors">
               Guardian AI →
             </Link>
           </div>
         </div>
-
-        {/* Summary Stats */}
-        <div className="grid grid-cols-2 sm:grid-cols-5 gap-3 mb-10">
-          <div className="bg-slate-925/60 border border-slate-800/40 rounded-lg px-4 py-3">
-            <div className="flex items-center gap-2 mb-1">
-              <div className="w-2 h-2 rounded-full bg-teal-400" />
-              <span className="text-xs text-warm-400">Average Health</span>
-            </div>
-            <p className="text-xl font-bold text-teal-400">{avgHealth}<span className="text-xs font-normal text-warm-400">/100</span></p>
-          </div>
-          <div className="bg-slate-925/60 border border-slate-800/40 rounded-lg px-4 py-3">
-            <div className="flex items-center gap-2 mb-1">
-              <div className="w-2 h-2 rounded-full bg-blue-500" />
-              <span className="text-xs text-warm-400">Live</span>
-            </div>
-            <p className="text-xl font-bold text-warm-100">{counts.live}</p>
-          </div>
-          <div className="bg-slate-925/60 border border-slate-800/40 rounded-lg px-4 py-3">
-            <div className="flex items-center gap-2 mb-1">
-              <div className="w-2 h-2 rounded-full bg-teal-500" />
-              <span className="text-xs text-warm-400">Active</span>
-            </div>
-            <p className="text-xl font-bold text-warm-100">{counts.active}</p>
-          </div>
-          <div className="bg-slate-925/60 border border-slate-800/40 rounded-lg px-4 py-3">
-            <div className="flex items-center gap-2 mb-1">
-              <div className="w-2 h-2 rounded-full bg-gold-500" />
-              <span className="text-xs text-warm-400">Planning</span>
-            </div>
-            <p className="text-xl font-bold text-warm-100">{counts.planning}</p>
-          </div>
-          <div className="bg-slate-925/60 border border-slate-800/40 rounded-lg px-4 py-3">
-            <div className="flex items-center gap-2 mb-1">
-              <div className="w-2 h-2 rounded-full bg-gray-500" />
-              <span className="text-xs text-warm-400">Not Started</span>
-            </div>
-            <p className="text-xl font-bold text-warm-100">{counts.not_started}</p>
-          </div>
-        </div>
       </section>
 
-      {/* Feature Preview */}
+      {/* ═══ 1. FOUNDATION HEALTH SCORE ═══ */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-10">
-        <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          <div className="bg-slate-925/60 border border-teal-800/30 rounded-xl p-5">
-            <h3 className="text-sm font-semibold text-teal-400 mb-1">Foundation Dashboard</h3>
-            <p className="text-xs text-warm-300">Track all 16 components with health scores and status.</p>
+        <div className="bg-slate-925/60 border border-slate-800/40 rounded-2xl p-6 sm:p-8">
+          <h2 className="text-sm font-semibold text-warm-400 uppercase tracking-wider mb-6">Foundation Health</h2>
+          <div className="flex flex-col sm:flex-row items-center gap-8">
+            <FoundationHealthGauge score={avgHealth} />
+            <div className="flex-1 grid grid-cols-1 sm:grid-cols-3 gap-4 w-full">
+              <div className="bg-slate-950/50 border border-slate-800/30 rounded-xl p-4">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-xs text-warm-400">Community Engagement</span>
+                  <span className="text-sm font-bold text-gold-400">{communityEngagement}<span className="text-xs font-normal text-warm-500">/100</span></span>
+                </div>
+                <div className="w-full h-1.5 bg-slate-800 rounded-full overflow-hidden">
+                  <div className="h-full bg-gold-400 rounded-full transition-all duration-1000" style={{ width: `${communityEngagement}%` }} />
+                </div>
+              </div>
+              <div className="bg-slate-950/50 border border-slate-800/30 rounded-xl p-4">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-xs text-warm-400">Content Depth</span>
+                  <span className="text-sm font-bold text-teal-400">{contentDepth}<span className="text-xs font-normal text-warm-500">/100</span></span>
+                </div>
+                <div className="w-full h-1.5 bg-slate-800 rounded-full overflow-hidden">
+                  <div className="h-full bg-teal-400 rounded-full transition-all duration-1000" style={{ width: `${contentDepth}%` }} />
+                </div>
+              </div>
+              <div className="bg-slate-950/50 border border-slate-800/30 rounded-xl p-4">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-xs text-warm-400">Active Contributors</span>
+                  <span className="text-sm font-bold text-ae-silver">{activeContributorScore}<span className="text-xs font-normal text-warm-500">/100</span></span>
+                </div>
+                <div className="w-full h-1.5 bg-slate-800 rounded-full overflow-hidden">
+                  <div className="h-full bg-ae-silver rounded-full transition-all duration-1000" style={{ width: `${activeContributorScore}%` }} />
+                </div>
+              </div>
+            </div>
           </div>
-          <div className="bg-slate-925/60 border border-gold-600/30 rounded-xl p-5">
-            <h3 className="text-sm font-semibold text-gold-400 mb-1">Community Contributions</h3>
-            <p className="text-xs text-warm-300">Submit stories, proposals, and ideas that shape the framework.</p>
-          </div>
-          <div className="bg-slate-925/60 border border-teal-800/30 rounded-xl p-5">
-            <h3 className="text-sm font-semibold text-teal-400 mb-1">Guardian AI</h3>
-            <p className="text-xs text-warm-300">A public AI civic companion. Informs, never persuades.</p>
-          </div>
-          <div className="bg-slate-925/60 border border-ae-silver/30 rounded-xl p-5">
-            <h3 className="text-sm font-semibold text-ae-silver mb-1">Talk to Æ</h3>
-            <p className="text-xs text-warm-300">Engage with the intelligence that helped build the Foundation.</p>
-          </div>
-        </div>
-        <div className="text-center mt-6">
-          <Link
-            href="/foundation"
-            className="inline-block px-6 py-2.5 bg-teal-600 hover:bg-teal-500 text-white rounded-lg transition-colors text-sm font-medium"
-          >
-            Explore the Foundation
-          </Link>
-          <p className="text-warm-400/50 text-xs mt-4">
-            Early access — features are being built in public
-          </p>
         </div>
       </section>
 
-      {/* Component Grid */}
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-16">
+      {/* ═══ 2. ACTIVITY FEED ═══ */}
+      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-10">
+        <div className="bg-slate-925/60 border border-slate-800/40 rounded-2xl p-6 sm:p-8">
+          <div className="flex items-center justify-between mb-5">
+            <h2 className="text-sm font-semibold text-warm-400 uppercase tracking-wider">Recent Activity</h2>
+            <div className="flex items-center gap-2">
+              <div className="w-2 h-2 rounded-full bg-teal-400 pulse-dot" />
+              <span className="text-xs text-teal-400">Live</span>
+            </div>
+          </div>
+          <div className="space-y-1 max-h-[420px] overflow-y-auto pr-2">
+            {activityFeed.map((item, i) => (
+              <div
+                key={item.id}
+                className={`flex items-start gap-3 px-3 py-2.5 rounded-lg hover:bg-slate-950/40 transition-colors ${
+                  i < 2 ? "new-item-pulse" : ""
+                }`}
+              >
+                <span className="text-sm mt-0.5 flex-shrink-0">{activityTypeIcons[item.type]}</span>
+                <div className="flex-1 min-w-0">
+                  <p className={`text-sm ${activityTypeColors[item.type]} leading-snug`}>
+                    {item.text}
+                  </p>
+                </div>
+                <span className="text-[11px] text-warm-500 flex-shrink-0 mt-0.5">
+                  {formatRelativeTime(item.timestamp)}
+                </span>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ═══ 3. COMPONENT CARDS ═══ */}
+      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-10">
+        <div className="flex items-center justify-between mb-5">
+          <h2 className="text-sm font-semibold text-warm-400 uppercase tracking-wider">Foundation Components</h2>
+          <div className="flex items-center gap-1 bg-slate-925/60 border border-slate-800/40 rounded-lg p-0.5">
+            <button
+              onClick={() => setSortMode("most_active")}
+              className={`px-3 py-1.5 text-xs rounded-md transition-colors ${
+                sortMode === "most_active"
+                  ? "bg-teal-900/40 text-teal-400"
+                  : "text-warm-400 hover:text-warm-200"
+              }`}
+            >
+              Most Active
+            </button>
+            <button
+              onClick={() => setSortMode("needs_attention")}
+              className={`px-3 py-1.5 text-xs rounded-md transition-colors ${
+                sortMode === "needs_attention"
+                  ? "bg-gold-600/20 text-gold-400"
+                  : "text-warm-400 hover:text-warm-200"
+              }`}
+            >
+              Needs Attention
+            </button>
+          </div>
+        </div>
         <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          {foundationComponents.map((component) => (
+          {sortedComponents.map((component) => (
             <ComponentCard key={component.id} component={component} />
           ))}
+        </div>
+      </section>
+
+      {/* ═══ 4. YOUR CONTRIBUTIONS ═══ */}
+      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-10">
+        <div className="bg-slate-925/60 border border-gold-600/20 rounded-2xl p-6 sm:p-8 text-center">
+          <h2 className="text-sm font-semibold text-warm-400 uppercase tracking-wider mb-4">Your Contributions</h2>
+          <p className="text-warm-300 text-sm mb-6 max-w-md mx-auto">
+            Your contributions will appear here. Start by sharing an idea on any Foundation component.
+          </p>
+          <a
+            href="https://formspree.io/f/xkovallr"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-block px-6 py-2.5 bg-gold-500 hover:bg-gold-400 text-slate-950 rounded-lg transition-colors text-sm font-medium"
+          >
+            Share an Idea
+          </a>
         </div>
       </section>
 
@@ -276,7 +381,6 @@ export default function Home() {
             </p>
           </Link>
         </div>
-
         <p className="text-center text-warm-400/40 text-xs mt-8">
           A Brain Mastery app by Humanity & AI
         </p>

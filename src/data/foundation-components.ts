@@ -10,6 +10,8 @@ export interface FoundationComponent {
   progressPct: number;
   healthScore: number;
   currentStatusText: string;
+  recentContributors: number;
+  hasRecentActivity: boolean;
 }
 
 export const foundationComponents: FoundationComponent[] = [
@@ -23,6 +25,8 @@ export const foundationComponents: FoundationComponent[] = [
     progressPct: 35,
     healthScore: 72,
     currentStatusText: "Core framework defined, pilot program design in progress",
+    recentContributors: 8,
+    hasRecentActivity: true,
   },
   {
     id: 2,
@@ -34,6 +38,8 @@ export const foundationComponents: FoundationComponent[] = [
     progressPct: 40,
     healthScore: 78,
     currentStatusText: "Governance model drafted, public comment period active",
+    recentContributors: 12,
+    hasRecentActivity: true,
   },
   {
     id: 3,
@@ -45,6 +51,8 @@ export const foundationComponents: FoundationComponent[] = [
     progressPct: 20,
     healthScore: 45,
     currentStatusText: "Policy framework under development",
+    recentContributors: 3,
+    hasRecentActivity: true,
   },
   {
     id: 4,
@@ -56,6 +64,8 @@ export const foundationComponents: FoundationComponent[] = [
     progressPct: 15,
     healthScore: 38,
     currentStatusText: "Research phase — surveying existing transparency frameworks",
+    recentContributors: 2,
+    hasRecentActivity: true,
   },
   {
     id: 5,
@@ -67,6 +77,8 @@ export const foundationComponents: FoundationComponent[] = [
     progressPct: 10,
     healthScore: 30,
     currentStatusText: "Concept development and stakeholder mapping",
+    recentContributors: 1,
+    hasRecentActivity: false,
   },
   {
     id: 6,
@@ -78,6 +90,8 @@ export const foundationComponents: FoundationComponent[] = [
     progressPct: 18,
     healthScore: 42,
     currentStatusText: "Economic modeling and policy research underway",
+    recentContributors: 4,
+    hasRecentActivity: true,
   },
   {
     id: 7,
@@ -89,6 +103,8 @@ export const foundationComponents: FoundationComponent[] = [
     progressPct: 25,
     healthScore: 65,
     currentStatusText: "Partnership discussions with rural health networks",
+    recentContributors: 6,
+    hasRecentActivity: true,
   },
   {
     id: 8,
@@ -100,6 +116,8 @@ export const foundationComponents: FoundationComponent[] = [
     progressPct: 12,
     healthScore: 35,
     currentStatusText: "Carbon impact assessment methodology in development",
+    recentContributors: 1,
+    hasRecentActivity: true,
   },
   {
     id: 9,
@@ -111,6 +129,8 @@ export const foundationComponents: FoundationComponent[] = [
     progressPct: 30,
     healthScore: 68,
     currentStatusText: "Technical architecture for data sovereignty defined",
+    recentContributors: 5,
+    hasRecentActivity: true,
   },
   {
     id: 10,
@@ -122,6 +142,8 @@ export const foundationComponents: FoundationComponent[] = [
     progressPct: 45,
     healthScore: 82,
     currentStatusText: "Clarity and Dojo apps in active development",
+    recentContributors: 9,
+    hasRecentActivity: true,
   },
   {
     id: 11,
@@ -133,6 +155,8 @@ export const foundationComponents: FoundationComponent[] = [
     progressPct: 8,
     healthScore: 25,
     currentStatusText: "Awaiting independent security audit before development",
+    recentContributors: 1,
+    hasRecentActivity: false,
   },
   {
     id: 12,
@@ -144,6 +168,8 @@ export const foundationComponents: FoundationComponent[] = [
     progressPct: 0,
     healthScore: 10,
     currentStatusText: "Scheduled for future phases",
+    recentContributors: 0,
+    hasRecentActivity: false,
   },
   {
     id: 13,
@@ -155,6 +181,8 @@ export const foundationComponents: FoundationComponent[] = [
     progressPct: 15,
     healthScore: 40,
     currentStatusText: "Artist consultation and ethical framework development",
+    recentContributors: 2,
+    hasRecentActivity: true,
   },
   {
     id: 14,
@@ -166,6 +194,8 @@ export const foundationComponents: FoundationComponent[] = [
     progressPct: 20,
     healthScore: 48,
     currentStatusText: "Advisory board formation with disability advocates",
+    recentContributors: 3,
+    hasRecentActivity: true,
   },
   {
     id: 15,
@@ -177,6 +207,8 @@ export const foundationComponents: FoundationComponent[] = [
     progressPct: 10,
     healthScore: 32,
     currentStatusText: "Initial conversations with tribal sovereignty advocates",
+    recentContributors: 1,
+    hasRecentActivity: true,
   },
   {
     id: 16,
@@ -188,6 +220,8 @@ export const foundationComponents: FoundationComponent[] = [
     progressPct: 0,
     healthScore: 12,
     currentStatusText: "Scheduled for future phases",
+    recentContributors: 0,
+    hasRecentActivity: false,
   },
 ];
 
