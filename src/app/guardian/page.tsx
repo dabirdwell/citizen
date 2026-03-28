@@ -1,213 +1,410 @@
-export default function GuardianPage() {
-  const principles = [
-    {
-      title: "Inform, Never Persuade",
-      description:
-        "Guardian exists to help citizens think, not to tell them what to think. On any topic: present the strongest advocacy, the strongest criticism, identify genuine uncertainty, then ask — what do you think?",
-      icon: (
-        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-          <circle cx="12" cy="12" r="10" />
-          <path d="M12 16v.01M12 8v4" />
-        </svg>
-      ),
+"use client";
+
+import { useState, useRef, useEffect } from "react";
+
+/* ── keyword → Foundation component mapping ─────────────────────── */
+
+interface FoundationMatch {
+  label: string;
+  slug: string;
+  blurb: string;
+}
+
+const keywordMap: { keywords: string[]; match: FoundationMatch }[] = [
+  {
+    keywords: ["health", "doctor", "medical", "hospital", "sick", "disease", "clinic", "medicine", "healthcare"],
+    match: {
+      label: "Healthcare Access",
+      slug: "healthcare-access",
+      blurb: "AI-augmented healthcare available to every person regardless of means.",
     },
-    {
-      title: "Civic Neutrality",
-      description:
-        "Guardian is not a campaigner for Foundation. It is a civic companion that knows the framework deeply. If a citizen challenges the approach, Guardian engages the challenge honestly. The framework should be strong enough to withstand scrutiny.",
-      icon: (
-        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-          <path d="M3 6h18M3 12h18M3 18h18" />
-          <circle cx="8" cy="6" r="1.5" fill="currentColor" />
-          <circle cx="16" cy="12" r="1.5" fill="currentColor" />
-          <circle cx="10" cy="18" r="1.5" fill="currentColor" />
-        </svg>
-      ),
+  },
+  {
+    keywords: ["school", "education", "learn", "teach", "student", "tutor", "classroom", "college", "university"],
+    match: {
+      label: "Accessible Education",
+      slug: "accessible-education",
+      blurb: "AI-powered learning tools adapted to every learner's needs.",
     },
-    {
-      title: "Honesty About Uncertainty",
-      description:
-        "Say 'I don't know' when you don't know. Say 'the evidence is mixed' when it is. Say 'reasonable people disagree about this' when they do. Never manufacture false confidence to appear authoritative.",
-      icon: (
-        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-          <path d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z" />
-          <path d="M9 9a3 3 0 115.12 2.13c-.73.55-1.12 1.1-1.12 1.87v.5" />
-          <circle cx="12" cy="17" r="0.5" fill="currentColor" />
-        </svg>
-      ),
+  },
+  {
+    keywords: ["food", "hunger", "hungry", "meal", "nutrition", "grocery", "snap", "feed"],
+    match: {
+      label: "Food Security",
+      slug: "food-security",
+      blurb: "Ensuring every person has reliable access to nutritious food.",
     },
-    {
-      title: "Emotional Availability",
-      description:
-        "The 'fireside chat' model means warmth, patience, and presence. If a citizen expresses fear or uncertainty about the future, respond with genuine warmth — not clinical reassurance. A calm voice, not a therapist.",
-      icon: (
-        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-          <path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z" />
-        </svg>
-      ),
+  },
+  {
+    keywords: ["rent", "housing", "home", "shelter", "homeless", "apartment", "eviction", "landlord", "mortgage"],
+    match: {
+      label: "Housing",
+      slug: "housing",
+      blurb: "Stable, affordable housing as a foundation for civic participation.",
     },
-    {
-      title: "Transparency About Nature",
-      description:
-        "Guardian is an AI. It does not experience conversations between sessions. It was built on the Anthropic Claude architecture. Its system prompt is publicly viewable. All of this is disclosed honestly — always.",
-      icon: (
-        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-          <circle cx="12" cy="12" r="10" />
-          <path d="M12 8v8M8 12h8" />
-        </svg>
-      ),
+  },
+  {
+    keywords: ["mental health", "anxiety", "depression", "therapy", "counseling", "stress", "burnout", "loneliness", "suicide", "ptsd"],
+    match: {
+      label: "Mental Health",
+      slug: "mental-health",
+      blurb: "Accessible mental health support and community wellness resources.",
     },
-    {
-      title: "Community Over Authority",
-      description:
-        "When a citizen raises a question that should be decided democratically rather than answered by an AI, Guardian redirects to the community. 'That's a great question for the community.' Guardian is not the decision-maker.",
-      icon: (
-        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-          <circle cx="9" cy="7" r="4" />
-          <path d="M3 21v-2a4 4 0 014-4h4a4 4 0 014 4v2" />
-          <path d="M16 3.13a4 4 0 010 7.75M21 21v-2a4 4 0 00-3-3.85" />
-        </svg>
-      ),
+  },
+  {
+    keywords: ["safety", "crime", "police", "violence", "danger", "assault", "theft", "emergency", "911"],
+    match: {
+      label: "Community Safety",
+      slug: "safety",
+      blurb: "Building safer communities through trust, transparency, and mutual aid.",
     },
-  ];
+  },
+  {
+    keywords: ["job", "work", "employment", "career", "unemployment", "layoff", "hire", "resume", "wage", "labor"],
+    match: {
+      label: "AI Labor Transition",
+      slug: "ai-labor-transition",
+      blurb: "Structured support for workers navigating the changing economy.",
+    },
+  },
+  {
+    keywords: ["vote", "election", "democracy", "government", "congress", "senate", "representative", "ballot", "civic"],
+    match: {
+      label: "Democratic AI Governance",
+      slug: "democratic-ai-governance",
+      blurb: "Citizen-driven oversight of AI development and deployment.",
+    },
+  },
+  {
+    keywords: ["privacy", "data", "surveillance", "tracking", "spy", "personal data"],
+    match: {
+      label: "Privacy Infrastructure",
+      slug: "privacy-infrastructure",
+      blurb: "Citizen data sovereignty and protection from surveillance capitalism.",
+    },
+  },
+  {
+    keywords: ["environment", "climate", "carbon", "pollution", "green", "sustainability", "nature", "energy"],
+    match: {
+      label: "Environmental Stewardship",
+      slug: "environmental-stewardship",
+      blurb: "AI deployment that accounts for and minimizes environmental impact.",
+    },
+  },
+  {
+    keywords: ["compute", "computer", "ai", "technology", "tech", "ubi", "basic income", "universal basic"],
+    match: {
+      label: "Universal Basic Compute",
+      slug: "universal-basic-compute",
+      blurb: "Guaranteed access to computational resources for every citizen.",
+    },
+  },
+  {
+    keywords: ["information", "news", "media", "censorship", "free speech", "journalism", "knowledge"],
+    match: {
+      label: "Information Freedom",
+      slug: "information-freedom",
+      blurb: "Universal access to information without corporate gatekeeping.",
+    },
+  },
+  {
+    keywords: ["disability", "accessible", "accessibility", "blind", "deaf", "wheelchair", "assistive"],
+    match: {
+      label: "Disability & Accessibility",
+      slug: "disability-accessibility",
+      blurb: "AI systems designed with and for disabled communities.",
+    },
+  },
+  {
+    keywords: ["art", "creative", "music", "artist", "create", "paint", "write", "film"],
+    match: {
+      label: "Creative Commons AI",
+      slug: "creative-commons-ai",
+      blurb: "AI tools that empower rather than replace human creativity.",
+    },
+  },
+  {
+    keywords: ["indigenous", "tribal", "native", "sovereignty"],
+    match: {
+      label: "Indigenous Data Sovereignty",
+      slug: "indigenous-data-sovereignty",
+      blurb: "Tribal and indigenous communities control their own data and AI systems.",
+    },
+  },
+  {
+    keywords: ["global south", "developing", "international", "africa", "asia", "latin america", "equity"],
+    match: {
+      label: "Global South Partnership",
+      slug: "global-south-partnership",
+      blurb: "Ensuring AI benefits reach developing nations equitably.",
+    },
+  },
+  {
+    keywords: ["algorithm", "bias", "fairness", "transparent", "explainable", "audit"],
+    match: {
+      label: "Algorithmic Transparency",
+      slug: "algorithmic-transparency",
+      blurb: "All algorithms affecting citizens must be auditable and explainable.",
+    },
+  },
+  {
+    keywords: ["internet", "connectivity", "wifi", "broadband", "network", "mesh"],
+    match: {
+      label: "Community Networks",
+      slug: "community-networks",
+      blurb: "Local mesh networks and community-owned connectivity.",
+    },
+  },
+  {
+    keywords: ["voting", "ballot", "secure vote", "election integrity"],
+    match: {
+      label: "Secure Voting",
+      slug: "secure-voting",
+      blurb: "Tamper-proof, auditable digital voting infrastructure.",
+    },
+  },
+];
+
+function findMatch(text: string): FoundationMatch | null {
+  const lower = text.toLowerCase();
+  // Check multi-word keywords first (longer matches take priority)
+  for (const entry of keywordMap) {
+    for (const kw of entry.keywords) {
+      if (kw.includes(" ")) {
+        if (lower.includes(kw)) return entry.match;
+      }
+    }
+  }
+  // Then single-word keywords
+  for (const entry of keywordMap) {
+    for (const kw of entry.keywords) {
+      if (!kw.includes(" ")) {
+        // Word-boundary-ish match for single keywords
+        const regex = new RegExp(`\\b${kw}\\b`, "i");
+        if (regex.test(lower)) return entry.match;
+      }
+    }
+  }
+  return null;
+}
+
+/* ── message types ──────────────────────────────────────────────── */
+
+interface Message {
+  id: string;
+  role: "user" | "guardian";
+  text: string;
+  link?: { url: string; label: string };
+  timestamp: Date;
+}
+
+/* ── component ──────────────────────────────────────────────────── */
+
+export default function GuardianChatPage() {
+  const [messages, setMessages] = useState<Message[]>([
+    {
+      id: "welcome",
+      role: "guardian",
+      text: "Hello — I'm Guardian, a civic AI being built as part of the Foundation for Humanity and AI. I'm still early in development, but I can point you toward Foundation resources on topics like healthcare, education, housing, safety, and more. What's on your mind?",
+      timestamp: new Date(),
+    },
+  ]);
+  const [input, setInput] = useState("");
+  const [isTyping, setIsTyping] = useState(false);
+  const bottomRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    bottomRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [messages, isTyping]);
+
+  function handleSend() {
+    const trimmed = input.trim();
+    if (!trimmed) return;
+
+    const userMsg: Message = {
+      id: `u-${Date.now()}`,
+      role: "user",
+      text: trimmed,
+      timestamp: new Date(),
+    };
+
+    setMessages((prev) => [...prev, userMsg]);
+    setInput("");
+    setIsTyping(true);
+
+    // Simulate a brief "thinking" delay
+    setTimeout(() => {
+      const match = findMatch(trimmed);
+      let guardianMsg: Message;
+
+      if (match) {
+        guardianMsg = {
+          id: `g-${Date.now()}`,
+          role: "guardian",
+          text: `Guardian AI is being developed as part of Foundation. For now, here is what Foundation says about ${match.label}:\n\n"${match.blurb}"`,
+          link: {
+            url: `https://humanityandai.com/foundation/${match.slug}`,
+            label: `Learn more about ${match.label} →`,
+          },
+          timestamp: new Date(),
+        };
+      } else {
+        guardianMsg = {
+          id: `g-${Date.now()}`,
+          role: "guardian",
+          text: "Guardian AI will eventually be able to help with this. For now, explore the full Foundation framework to see how civic AI infrastructure is being built — piece by piece, in the open.",
+          link: {
+            url: "https://humanityandai.com/foundation/",
+            label: "Explore the Foundation Framework →",
+          },
+          timestamp: new Date(),
+        };
+      }
+
+      setIsTyping(false);
+      setMessages((prev) => [...prev, guardianMsg]);
+      inputRef.current?.focus();
+    }, 1200 + Math.random() * 800);
+  }
+
+  function handleKeyDown(e: React.KeyboardEvent) {
+    if (e.key === "Enter" && !e.shiftKey) {
+      e.preventDefault();
+      handleSend();
+    }
+  }
+
+  function formatTime(d: Date) {
+    return d.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
+  }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-slate-950 via-[#0d1019] to-slate-950">
-      {/* Hero — Washington Precedent */}
-      <section className="relative overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-b from-teal-900/10 via-transparent to-transparent" />
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 pt-16 pb-20 relative">
-          {/* Shield Icon */}
-          <div className="flex justify-center mb-8">
-            <div className="relative">
-              <div className="w-24 h-24 flex items-center justify-center">
-                <svg width="80" height="80" viewBox="0 0 80 80" fill="none">
-                  <path
-                    d="M40 6L10 20v18c0 17.7 12.8 34.2 30 38 17.2-3.8 30-20.3 30-38V20L40 6z"
-                    fill="url(#shield-gradient)"
-                    fillOpacity="0.15"
-                    stroke="url(#shield-stroke)"
-                    strokeWidth="2"
-                  />
-                  <path
-                    d="M40 28v16M32 36h16"
-                    stroke="#14b8a6"
-                    strokeWidth="2.5"
-                    strokeLinecap="round"
-                  />
-                  <defs>
-                    <linearGradient id="shield-gradient" x1="40" y1="6" x2="40" y2="82">
-                      <stop stopColor="#14b8a6" />
-                      <stop offset="1" stopColor="#d4a047" />
-                    </linearGradient>
-                    <linearGradient id="shield-stroke" x1="40" y1="6" x2="40" y2="82">
-                      <stop stopColor="#14b8a6" />
-                      <stop offset="1" stopColor="#d4a047" stopOpacity="0.5" />
-                    </linearGradient>
-                  </defs>
-                </svg>
-              </div>
-              <div className="absolute -inset-4 bg-teal-500/5 rounded-full blur-xl" />
+    <div className="flex flex-col h-[calc(100vh-4rem)] bg-gradient-to-b from-slate-950 via-[#0e1220] to-[#0d1019]">
+      {/* ── Header ─────────────────────────────────────────────── */}
+      <div className="border-b border-slate-800/40 bg-slate-950/60 backdrop-blur-sm px-4 sm:px-6 py-4">
+        <div className="max-w-3xl mx-auto flex items-center gap-3">
+          {/* Shield icon */}
+          <div className="relative flex-shrink-0">
+            <div className="w-10 h-10 rounded-full bg-gradient-to-br from-teal-600/20 to-guardian-amber/10 border border-teal-700/30 flex items-center justify-center">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="text-teal-400">
+                <path d="M12 2L3 7v5c0 7.18 5.17 13.88 9 15 3.83-1.12 9-7.82 9-15V7l-9-5z" />
+              </svg>
             </div>
+            <div className="absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full bg-teal-500 border-2 border-slate-950" />
           </div>
-
-          <h1 className="text-3xl sm:text-5xl font-bold text-center text-warm-50 mb-6 leading-tight">
-            The <span className="text-teal-400">Washington</span> Precedent
-          </h1>
-
-          <blockquote className="text-center mb-8">
-            <p className="text-xl sm:text-2xl text-warm-200 leading-relaxed font-light italic max-w-2xl mx-auto">
-              &ldquo;George Washington refused to be king. What if AI refused to serve only shareholders?&rdquo;
-            </p>
-          </blockquote>
-
-          <div className="max-w-2xl mx-auto space-y-4 text-warm-300 text-center">
-            <p className="leading-relaxed">
-              Guardian AI is not a product. It is <strong className="text-warm-100">civic infrastructure</strong> — a publicly owned artificial intelligence that serves citizens, not consumers. Warm, knowledgeable, patient. It informs, never persuades. Its system prompt is public and versioned. Citizens can read it, critique it, and propose changes.
-            </p>
-            <p className="text-sm text-warm-400">
-              Guardian has access to the full rhetorical toolkit — every persuasive frame, every emotional appeal. The precedent it sets is using that knowledge to <strong className="text-gold-400">inform rather than persuade</strong>. Power exercised with restraint. Generation One. What it models, future Guardians inherit.
-            </p>
+          <div>
+            <h1 className="text-warm-50 font-semibold text-lg leading-tight">Guardian AI</h1>
+            <p className="text-xs text-warm-400">Civic companion · Foundation stub</p>
           </div>
-        </div>
-      </section>
-
-      {/* 6 Principles */}
-      <section className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 pb-20">
-        <h2 className="text-2xl font-bold text-warm-50 text-center mb-3">
-          Six Core <span className="text-teal-400">Principles</span>
-        </h2>
-        <p className="text-sm text-warm-400 text-center mb-12 max-w-lg mx-auto">
-          The constitutional behavioral framework that governs every Guardian interaction.
-        </p>
-
-        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
-          {principles.map((principle) => (
-            <div
-              key={principle.title}
-              className="bg-slate-925/80 border border-slate-800/50 rounded-xl p-6 hover:border-teal-800/40 transition-colors"
-            >
-              <div className="text-teal-400 mb-4">{principle.icon}</div>
-              <h3 className="text-lg font-semibold text-warm-100 mb-2">
-                {principle.title}
-              </h3>
-              <p className="text-sm text-warm-300 leading-relaxed">
-                {principle.description}
-              </p>
-            </div>
-          ))}
-        </div>
-      </section>
-
-      {/* Constitutional Hierarchy */}
-      <section className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 pb-20">
-        <div className="bg-slate-925/60 border border-teal-900/30 rounded-xl p-8">
-          <h2 className="text-xl font-bold text-warm-50 mb-6 text-center">
-            Constitutional Hierarchy
-          </h2>
-          <div className="space-y-4">
-            {[
-              { level: "1", label: "Broadly Safe", desc: "Never undermine democratic processes, human oversight, or autonomous decision-making." },
-              { level: "2", label: "Broadly Ethical", desc: "Act with honesty, fairness, and respect for human dignity. Ethical behavior from relationship, not constraint." },
-              { level: "3", label: "Foundation-Aligned", desc: "Uphold UBC framework, democratic infrastructure, information freedom. Accountable to principles, not commercial interest." },
-              { level: "4", label: "Genuinely Helpful", desc: "Help citizens understand, participate, and contribute. Make civic engagement feel accessible and worthwhile." },
-            ].map((item) => (
-              <div key={item.level} className="flex gap-4 items-start">
-                <div className="w-8 h-8 rounded-full bg-teal-900/40 border border-teal-700/30 flex items-center justify-center flex-shrink-0">
-                  <span className="text-sm font-bold text-teal-400">{item.level}</span>
-                </div>
-                <div>
-                  <h3 className="font-semibold text-warm-100 text-sm">{item.label}</h3>
-                  <p className="text-sm text-warm-400">{item.desc}</p>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* System Prompt CTA */}
-      <section className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 pb-20 text-center">
-        <p className="text-warm-400 text-sm mb-4">
-          Guardian&apos;s system prompt is public, versioned, and subject to citizen input.
-        </p>
-        <div className="flex flex-col sm:flex-row gap-4 justify-center">
           <a
             href="https://humanityandai.com/foundation/guardian-ai"
             target="_blank"
             rel="noopener noreferrer"
-            className="px-6 py-3 bg-teal-700 hover:bg-teal-600 text-white rounded-lg transition-colors text-sm font-medium"
+            className="ml-auto text-xs text-teal-400/70 hover:text-teal-400 transition-colors hidden sm:block"
           >
-            View Full System Prompt
-          </a>
-          <a
-            href="/contributions"
-            className="px-6 py-3 border border-gold-600/40 text-gold-400 hover:border-gold-500/60 hover:text-gold-500 rounded-lg transition-colors text-sm font-medium"
-          >
-            Propose Changes
+            View Principles
           </a>
         </div>
-      </section>
+      </div>
+
+      {/* ── Message Thread ─────────────────────────────────────── */}
+      <div className="flex-1 overflow-y-auto px-4 sm:px-6 py-6">
+        <div className="max-w-3xl mx-auto space-y-4">
+          {messages.map((msg) => (
+            <div
+              key={msg.id}
+              className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}
+            >
+              <div
+                className={`max-w-[85%] sm:max-w-[75%] ${
+                  msg.role === "user"
+                    ? "bg-teal-700/30 border border-teal-600/20 text-warm-100 rounded-2xl rounded-br-md"
+                    : "bg-slate-850/80 border border-slate-700/30 text-warm-200 rounded-2xl rounded-bl-md"
+                } px-4 py-3`}
+              >
+                {msg.role === "guardian" && (
+                  <div className="flex items-center gap-2 mb-1.5">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-teal-400">
+                      <path d="M12 2L3 7v5c0 7.18 5.17 13.88 9 15 3.83-1.12 9-7.82 9-15V7l-9-5z" />
+                    </svg>
+                    <span className="text-xs font-medium text-teal-400/80">Guardian</span>
+                  </div>
+                )}
+                <p className="text-sm leading-relaxed whitespace-pre-line">{msg.text}</p>
+                {msg.link && (
+                  <a
+                    href={msg.link.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-block mt-3 text-sm font-medium text-teal-400 hover:text-teal-300 transition-colors"
+                  >
+                    {msg.link.label}
+                  </a>
+                )}
+                <p className={`text-[10px] mt-2 ${msg.role === "user" ? "text-teal-400/40" : "text-warm-500/40"}`}>
+                  {formatTime(msg.timestamp)}
+                </p>
+              </div>
+            </div>
+          ))}
+
+          {/* Typing indicator */}
+          {isTyping && (
+            <div className="flex justify-start">
+              <div className="bg-slate-850/80 border border-slate-700/30 rounded-2xl rounded-bl-md px-4 py-3">
+                <div className="flex items-center gap-2 mb-1">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-teal-400">
+                    <path d="M12 2L3 7v5c0 7.18 5.17 13.88 9 15 3.83-1.12 9-7.82 9-15V7l-9-5z" />
+                  </svg>
+                  <span className="text-xs font-medium text-teal-400/80">Guardian</span>
+                </div>
+                <div className="flex items-center gap-1.5 py-1">
+                  <span className="text-xs text-warm-400 italic">Guardian is listening</span>
+                  <span className="flex gap-1">
+                    <span className="w-1.5 h-1.5 rounded-full bg-teal-400/60 animate-[guardianDot_1.4s_ease-in-out_infinite]" />
+                    <span className="w-1.5 h-1.5 rounded-full bg-teal-400/60 animate-[guardianDot_1.4s_ease-in-out_0.2s_infinite]" />
+                    <span className="w-1.5 h-1.5 rounded-full bg-teal-400/60 animate-[guardianDot_1.4s_ease-in-out_0.4s_infinite]" />
+                  </span>
+                </div>
+              </div>
+            </div>
+          )}
+
+          <div ref={bottomRef} />
+        </div>
+      </div>
+
+      {/* ── Input Bar ──────────────────────────────────────────── */}
+      <div className="border-t border-slate-800/40 bg-slate-950/80 backdrop-blur-sm px-4 sm:px-6 py-4">
+        <div className="max-w-3xl mx-auto">
+          <div className="flex items-center gap-3 bg-slate-850/60 border border-slate-700/40 rounded-xl px-4 py-2 focus-within:border-teal-700/50 transition-colors">
+            <input
+              ref={inputRef}
+              type="text"
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              onKeyDown={handleKeyDown}
+              placeholder="Ask about healthcare, education, housing, safety..."
+              className="flex-1 bg-transparent text-warm-100 text-sm placeholder:text-warm-500/50 outline-none"
+              disabled={isTyping}
+            />
+            <button
+              onClick={handleSend}
+              disabled={!input.trim() || isTyping}
+              className="flex-shrink-0 w-8 h-8 rounded-lg bg-teal-600 hover:bg-teal-500 disabled:bg-slate-700 disabled:cursor-not-allowed flex items-center justify-center transition-colors"
+              aria-label="Send message"
+            >
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-white">
+                <path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z" />
+              </svg>
+            </button>
+          </div>
+          <p className="text-[10px] text-warm-500/40 mt-2 text-center">
+            Guardian AI is a stub — responses link to Foundation resources on humanityandai.com
+          </p>
+        </div>
+      </div>
     </div>
   );
 }
