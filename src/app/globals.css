@@ -66,3 +66,38 @@ body {
 .active-glow:hover {
   box-shadow: 0 0 20px -4px rgba(20, 184, 166, 0.15);
 }
+
+/* Wizard step fade-in */
+@keyframes wizardFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.wizard-fade-in {
+  animation: wizardFadeIn 0.35s ease-out;
+}
+
+/* Confirmation checkmark pop */
+@keyframes confirmPop {
+  0% {
+    transform: scale(0.5);
+    opacity: 0;
+  }
+  60% {
+    transform: scale(1.15);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+.confirmation-pop {
+  animation: confirmPop 0.5s ease-out;
+}

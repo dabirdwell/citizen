@@ -17,6 +17,7 @@ export const metadata: Metadata = {
 
 const navLinks = [
   { href: "/", label: "Dashboard" },
+  { href: "/contribute", label: "Contribute" },
   { href: "/contributions", label: "Contributions" },
   { href: "/guardian", label: "Guardian AI" },
   { href: "/ae", label: "Talk to Æ" },
