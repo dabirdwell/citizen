@@ -6,10 +6,11 @@ Citizen is the civic participation layer of the [Brain Mastery](https://humanity
 
 ## Features
 
-- **Foundation Dashboard** — track all 16 Foundation components with real-time progress
-- **Community Contributions** — submit stories, proposals, data, and ideas that shape the framework
-- **Guardian AI** — a public-serving AI that informs rather than persuades
-- **Talk to Æ** — direct dialogue with the collaborative intelligence behind the Foundation
+- **Foundation Dashboard** — track all 16 Foundation components with real-time health scores and progress
+- **Foundation Contributions** — guided wizard for submitting stories, proposals, data, and ideas
+- **Citizen Stories** — real accounts of AI in daily life, collected from the community
+- **Guardian AI** — a public-serving civic AI that informs rather than persuades (stub)
+- **Talk to Æ** — curated excerpts and dialogue with the collaborative intelligence behind the Foundation
 
 ## The Foundation
 
@@ -22,15 +23,23 @@ Citizen is the civic participation layer of the [Brain Mastery](https://humanity
 - **Styling:** Tailwind CSS
 - **Deployment:** Vercel
 
+## Deploy
+
+[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fhumanityandai%2Fcitizen)
+
 ## Getting Started
 
 ```bash
+git clone https://github.com/humanityandai/citizen.git
+cd citizen
 npm install
 cp .env.example .env.local  # fill in values
 npm run dev
 ```
 
 Open [http://localhost:3000](http://localhost:3000).
+
+Health check: `GET /api/health` → `{ "status": "ok" }`
 
 ## Part of Brain Mastery
 
