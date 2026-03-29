@@ -19,6 +19,7 @@ const navLinks = [
   { href: "/", label: "Dashboard" },
   { href: "/contribute", label: "Contribute" },
   { href: "/contributions", label: "Contributions" },
+  { href: "/vote", label: "Community Vote" },
   { href: "/stories", label: "Stories" },
   { href: "/guardian", label: "Guardian AI" },
   { href: "/ae", label: "Meet Æ" },
