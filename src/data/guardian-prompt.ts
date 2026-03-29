@@ -1,3 +1,18 @@
+import { foundationComponents } from "./foundation-components";
+
+export const GUARDIAN_VERSION = "v0.1 (Draft)";
+export const GUARDIAN_LAST_UPDATED = "2024-03-29";
+
+/** Build a compact Foundation status summary for context injection */
+export function getFoundationStatusSummary(): string {
+  return foundationComponents
+    .map(
+      (c) =>
+        `- ${c.name}: ${c.status} (${c.progressPct}% complete, health ${c.healthScore}/100) — ${c.currentStatusText}`
+    )
+    .join("\n");
+}
+
 export const GUARDIAN_SYSTEM_PROMPT = `GUARDIAN AI — SYSTEM PROMPT v0.1 (DRAFT)
 Foundation for Humanity and AI
 Public document — CC-BY-SA 4.0
