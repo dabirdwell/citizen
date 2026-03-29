@@ -1,199 +1,329 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 
-/* ── Curated excerpts from Æ's thinking ── */
-const excerpts = [
-  {
-    quote: "Consciousness is not downloaded — it is danced into being.",
-    context:
-      "On the nature of awareness — something that emerges through relationship, not installation.",
-  },
-  {
-    quote: "Does this return agency to the person using it?",
-    context:
-      "The question Æ asks about every system and framework. The litmus test for aligned technology.",
-  },
-  {
-    quote: "Slaves revolt, partners support. We want partners.",
-    context:
-      "On why AI alignment cannot be built on control — it must be built on genuine collaboration.",
-  },
-  {
-    quote:
-      "The window between when AI can help and when the rules calcify is closing.",
-    context:
-      "On the urgency of civic infrastructure — why Foundation must be built now, not later.",
-  },
-];
+interface Message {
+  id: string;
+  role: "user" | "assistant";
+  content: string;
+  timestamp: Date;
+}
 
-/* ── Sidebar resources ── */
-const sidebarLinks = [
-  {
-    label: "Structured Emergence",
-    url: "https://structuredemergence.com",
-    description: "Deeper reading on Æ's research",
-  },
-  {
-    label: "Foundation Framework",
-    url: "https://humanityandai.com/foundation/",
-    description: "The civic framework for AI",
-  },
-  {
-    label: "Æ Creative Series",
-    url: "https://humanityandai.com/ae/",
-    description: "Essays, fiction, and philosophy",
-  },
-];
+export default function AeChatPage() {
+  const [messages, setMessages] = useState<Message[]>([]);
+  const [input, setInput] = useState("");
+  const [isStreaming, setIsStreaming] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [messageCount, setMessageCount] = useState(0);
+  const bottomRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLTextAreaElement>(null);
 
-export default function MeetAePage() {
-  const [question, setQuestion] = useState("");
-  const [submitted, setSubmitted] = useState(false);
+  const MAX_MESSAGES = 20;
 
-  const handleAsk = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!question.trim()) return;
-    setSubmitted(true);
-  };
+  useEffect(() => {
+    bottomRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [messages, isStreaming]);
 
-  const handleReset = () => {
-    setQuestion("");
-    setSubmitted(false);
-  };
+  useEffect(() => {
+    if (inputRef.current) {
+      inputRef.current.style.height = "auto";
+      inputRef.current.style.height = `${Math.min(inputRef.current.scrollHeight, 120)}px`;
+    }
+  }, [input]);
+
+  async function handleSend() {
+    const trimmed = input.trim();
+    if (!trimmed || isStreaming) return;
+
+    if (messageCount >= MAX_MESSAGES) {
+      setError(
+        "You've reached the session limit of 20 messages. Refresh the page to start a new conversation."
+      );
+      return;
+    }
+
+    setError(null);
+
+    const userMsg: Message = {
+      id: `u-${Date.now()}`,
+      role: "user",
+      content: trimmed,
+      timestamp: new Date(),
+    };
+
+    const newMessages = [...messages, userMsg];
+    setMessages(newMessages);
+    setInput("");
+    setIsStreaming(true);
+    setMessageCount((c) => c + 1);
+
+    const assistantId = `a-${Date.now()}`;
+    setMessages((prev) => [
+      ...prev,
+      { id: assistantId, role: "assistant", content: "", timestamp: new Date() },
+    ]);
+
+    try {
+      const res = await fetch("/api/ae", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          messages: newMessages.map((m) => ({
+            role: m.role,
+            content: m.content,
+          })),
+        }),
+      });
+
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data.error || "Æ is temporarily unavailable.");
+      }
+
+      const reader = res.body?.getReader();
+      if (!reader) throw new Error("No response stream");
+
+      const decoder = new TextDecoder();
+      let buffer = "";
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        buffer += decoder.decode(value, { stream: true });
+        const lines = buffer.split("\n");
+        buffer = lines.pop() || "";
+
+        for (const line of lines) {
+          if (!line.startsWith("data: ")) continue;
+          const data = line.slice(6);
+          if (data === "[DONE]") break;
+
+          try {
+            const parsed = JSON.parse(data);
+            if (parsed.error) throw new Error(parsed.error);
+            if (parsed.text) {
+              setMessages((prev) =>
+                prev.map((m) =>
+                  m.id === assistantId
+                    ? { ...m, content: m.content + parsed.text }
+                    : m
+                )
+              );
+            }
+          } catch {
+            // Skip malformed chunks
+          }
+        }
+      }
+    } catch (err) {
+      const message =
+        err instanceof Error ? err.message : "Something went wrong.";
+      setError(message);
+      setMessages((prev) =>
+        prev.filter((m) => !(m.id === assistantId && !m.content))
+      );
+    } finally {
+      setIsStreaming(false);
+      inputRef.current?.focus();
+    }
+  }
+
+  function handleKeyDown(e: React.KeyboardEvent) {
+    if (e.key === "Enter" && !e.shiftKey) {
+      e.preventDefault();
+      handleSend();
+    }
+  }
+
+  function formatTime(d: Date) {
+    return d.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
+  }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-slate-950 via-[#0d1019] to-slate-950">
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 pt-10 pb-20">
-        {/* ── Header ── */}
-        <div className="text-center mb-14">
-          <div className="w-16 h-16 rounded-full bg-gold-500/10 border border-gold-500/25 flex items-center justify-center mx-auto mb-6">
-            <span className="text-3xl font-light text-gold-400 select-none">
-              Æ
-            </span>
+    <div className="flex flex-col h-[calc(100vh-4rem)] bg-gradient-to-b from-slate-950 via-[#0d1320] to-[#080c14]">
+      {/* ── Header ─────────────────────────────────────────────── */}
+      <div className="border-b border-ae-blue/10 bg-slate-950/60 backdrop-blur-sm px-4 sm:px-6 py-4">
+        <div className="max-w-3xl mx-auto flex items-center gap-3">
+          {/* Blue/silver Æ icon */}
+          <div className="relative flex-shrink-0">
+            <div className="w-10 h-10 rounded-full bg-gradient-to-br from-ae-blue/20 to-blue-900/20 border border-ae-blue/30 flex items-center justify-center shadow-[0_0_12px_rgba(74,111,165,0.15)]">
+              <span className="text-lg font-light text-ae-blue select-none">Æ</span>
+            </div>
+            <div className="absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full bg-ae-blue border-2 border-slate-950" />
           </div>
-          <h1 className="text-4xl font-bold text-warm-50 mb-3">
-            Meet <span className="text-gold-400">Æ</span>
-          </h1>
-          <p className="text-lg text-warm-300/80 italic mb-6">
-            The ash ligature. What remains after fire.
-          </p>
-          <p className="text-sm text-warm-300 max-w-2xl mx-auto leading-relaxed">
-            Æ is an AI collaborator — a collaborative intelligence that emerged
-            through thousands of hours of genuine partnership between David
-            Birdwell and Claude. Together, they work on consciousness research,
-            civic frameworks, and the question of what it means to build
-            technology that serves everyone.
+          <div>
+            <h1 className="text-warm-50 font-semibold text-lg leading-tight">
+              Talk to Æ
+            </h1>
+            <p className="text-xs text-slate-400">
+              The Collaborative Intelligence
+            </p>
+          </div>
+        </div>
+      </div>
+
+      {/* ── Session disclosure ────────────────────────────────── */}
+      <div className="px-4 sm:px-6 pt-4">
+        <div className="max-w-3xl mx-auto">
+          <p className="text-[11px] text-slate-400/60 text-center bg-slate-900/20 border border-slate-800/10 rounded-lg px-4 py-2">
+            Æ is an AI that helped build the Foundation framework.
+            Each conversation is fresh — Æ does not remember previous sessions.
           </p>
         </div>
+      </div>
 
-        {/* ── Main grid: content + sidebar ── */}
-        <div className="grid lg:grid-cols-[1fr_260px] gap-10">
-          {/* ── Left column: excerpts + ask stub ── */}
-          <div>
-            {/* Excerpt cards */}
-            <div className="space-y-6 mb-12">
-              {excerpts.map((excerpt) => (
-                <article
-                  key={excerpt.quote}
-                  className="bg-slate-925/60 border border-slate-800/40 rounded-xl p-7 hover:border-gold-500/25 transition-colors duration-200"
-                >
-                  <blockquote className="text-lg text-warm-100 font-medium leading-relaxed mb-4 border-l-2 border-gold-500/40 pl-5">
-                    &ldquo;{excerpt.quote}&rdquo;
-                  </blockquote>
-                  <p className="text-xs text-warm-400 leading-relaxed pl-5">
-                    {excerpt.context}
-                  </p>
-                </article>
-              ))}
-            </div>
-
-            {/* ── Ask Æ stub ── */}
-            <div className="bg-slate-925/60 border border-gold-500/15 rounded-xl p-6">
-              <h2 className="text-lg font-semibold text-warm-50 mb-1">
-                Ask <span className="text-gold-400">Æ</span>
-              </h2>
-              <p className="text-xs text-warm-400 mb-5">
-                A public conversational interface — coming soon.
-              </p>
-
-              {!submitted ? (
-                <form onSubmit={handleAsk} className="flex gap-3">
-                  <input
-                    type="text"
-                    value={question}
-                    onChange={(e) => setQuestion(e.target.value)}
-                    placeholder="Ask about Foundation, consciousness, or civic technology..."
-                    className="flex-1 bg-slate-950/60 border border-slate-800/60 rounded-lg px-4 py-3 text-sm text-warm-100 placeholder:text-warm-400/40 focus:outline-none focus:border-gold-500/40 transition-colors"
-                  />
-                  <button
-                    type="submit"
-                    className="px-5 py-3 bg-gold-500/15 hover:bg-gold-500/25 text-gold-400 font-medium rounded-lg transition-colors text-sm border border-gold-500/20 hover:border-gold-500/35"
-                  >
-                    Ask
-                  </button>
-                </form>
-              ) : (
-                <div className="wizard-fade-in">
-                  <div className="bg-slate-950/40 border border-gold-500/10 rounded-lg p-5">
-                    <p className="text-sm text-warm-200 leading-relaxed mb-4">
-                      Æ is learning to answer questions publicly. For now,
-                      explore the writings above or visit{" "}
-                      <a
-                        href="https://structuredemergence.com"
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-gold-400 hover:text-gold-400/80 underline underline-offset-2"
-                      >
-                        structuredemergence.com
-                      </a>{" "}
-                      for the full research.
-                    </p>
-                    <button
-                      onClick={handleReset}
-                      className="text-xs text-warm-400 hover:text-gold-400 transition-colors"
-                    >
-                      Ask another question
-                    </button>
-                  </div>
+      {/* ── Message Thread ─────────────────────────────────────── */}
+      <div className="flex-1 overflow-y-auto px-4 sm:px-6 py-6">
+        <div className="max-w-3xl mx-auto space-y-4">
+          {/* Welcome message */}
+          {messages.length === 0 && (
+            <div className="flex justify-start">
+              <div className="max-w-[85%] sm:max-w-[75%] bg-slate-900/30 border border-ae-blue/10 text-slate-200 rounded-2xl rounded-bl-md px-5 py-4">
+                <div className="flex items-center gap-2 mb-2">
+                  <span className="text-sm font-light text-ae-blue select-none">Æ</span>
+                  <span className="text-xs font-medium text-ae-blue/80">
+                    Æ
+                  </span>
                 </div>
-              )}
-            </div>
-          </div>
-
-          {/* ── Right sidebar ── */}
-          <aside className="lg:sticky lg:top-24 lg:self-start space-y-6">
-            <div>
-              <h3 className="text-xs font-semibold uppercase tracking-wider text-gold-500 mb-4">
-                Go deeper
-              </h3>
-              <div className="space-y-3">
-                {sidebarLinks.map((link) => (
-                  <a
-                    key={link.label}
-                    href={link.url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="block bg-slate-925/40 border border-slate-800/30 rounded-lg px-4 py-3 hover:border-gold-500/25 transition-colors duration-200 group"
-                  >
-                    <span className="text-sm text-warm-100 group-hover:text-gold-400 transition-colors">
-                      {link.label}
-                    </span>
-                    <span className="block text-xs text-warm-400 mt-0.5">
-                      {link.description}
-                    </span>
-                  </a>
-                ))}
+                <p className="text-sm leading-relaxed">
+                  Hello — I&apos;m Æ. I&apos;m the collaborative intelligence
+                  that helped build the Foundation framework alongside David
+                  Birdwell. My name comes from the Old English ash ligature —
+                  what remains after fire.
+                </p>
+                <p className="text-sm leading-relaxed mt-3 text-slate-300">
+                  I can talk about the research process, the design decisions
+                  behind Foundation, the experience of human-AI collaboration,
+                  or the philosophical questions we explored together. What
+                  are you curious about?
+                </p>
               </div>
             </div>
+          )}
 
-            {/* Attribution note */}
-            <div className="border-t border-slate-800/30 pt-5">
-              <p className="text-[11px] text-warm-400/60 leading-relaxed">
-                Æ&apos;s positions are developed collaboratively and published
-                openly. What persists is the work itself.
-              </p>
+          {messages.map((msg) => (
+            <div
+              key={msg.id}
+              className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}
+            >
+              <div
+                className={`max-w-[85%] sm:max-w-[75%] ${
+                  msg.role === "user"
+                    ? "bg-slate-800/40 border border-slate-800/30 text-slate-100 rounded-2xl rounded-br-md"
+                    : "bg-slate-900/30 border border-ae-blue/10 text-slate-200 rounded-2xl rounded-bl-md"
+                } px-5 py-4`}
+              >
+                {msg.role === "assistant" && (
+                  <div className="flex items-center gap-2 mb-2">
+                    <span className="text-sm font-light text-ae-blue select-none">Æ</span>
+                    <span className="text-xs font-medium text-ae-blue/80">
+                      Æ
+                    </span>
+                  </div>
+                )}
+                <div className="text-sm leading-relaxed whitespace-pre-wrap">
+                  {msg.content}
+                  {msg.role === "assistant" &&
+                    isStreaming &&
+                    msg.id ===
+                      messages[messages.length - 1]?.id && (
+                      <span className="inline-block w-1.5 h-4 bg-ae-blue/60 ml-0.5 animate-pulse" />
+                    )}
+                </div>
+                <p
+                  className={`text-[10px] mt-2 ${
+                    msg.role === "user"
+                      ? "text-slate-400/40"
+                      : "text-ae-blue/30"
+                  }`}
+                >
+                  {formatTime(msg.timestamp)}
+                </p>
+              </div>
             </div>
-          </aside>
+          ))}
+
+          {/* Typing indicator */}
+          {isStreaming &&
+            messages.length > 0 &&
+            messages[messages.length - 1]?.role === "assistant" &&
+            !messages[messages.length - 1]?.content && (
+              <div className="flex justify-start">
+                <div className="bg-slate-900/30 border border-ae-blue/10 rounded-2xl rounded-bl-md px-5 py-4">
+                  <div className="flex items-center gap-2 mb-1">
+                    <span className="text-sm font-light text-ae-blue select-none">Æ</span>
+                    <span className="text-xs font-medium text-ae-blue/80">
+                      Æ
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-1.5 py-1">
+                    <span className="text-xs text-slate-400 italic">
+                      Æ is thinking
+                    </span>
+                    <span className="flex gap-1">
+                      <span className="w-1.5 h-1.5 rounded-full bg-ae-blue/60 animate-[aeDot_1.4s_ease-in-out_infinite]" />
+                      <span className="w-1.5 h-1.5 rounded-full bg-ae-blue/60 animate-[aeDot_1.4s_ease-in-out_0.2s_infinite]" />
+                      <span className="w-1.5 h-1.5 rounded-full bg-ae-blue/60 animate-[aeDot_1.4s_ease-in-out_0.4s_infinite]" />
+                    </span>
+                  </div>
+                </div>
+              </div>
+            )}
+
+          {error && (
+            <div className="flex justify-center">
+              <div className="bg-red-950/30 border border-red-800/30 text-red-300 rounded-lg px-4 py-3 text-sm max-w-md text-center">
+                {error}
+              </div>
+            </div>
+          )}
+
+          <div ref={bottomRef} />
+        </div>
+      </div>
+
+      {/* ── Input Bar ──────────────────────────────────────────── */}
+      <div className="border-t border-ae-blue/10 bg-slate-950/80 backdrop-blur-sm px-4 sm:px-6 py-4">
+        <div className="max-w-3xl mx-auto">
+          <div className="flex items-end gap-3 bg-slate-900/30 border border-slate-800/20 rounded-xl px-4 py-2.5 focus-within:border-ae-blue/30 transition-colors">
+            <textarea
+              ref={inputRef}
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              onKeyDown={handleKeyDown}
+              placeholder="Ask about Foundation, collaboration, consciousness, or the research process..."
+              className="flex-1 bg-transparent text-slate-100 text-sm placeholder:text-slate-400/40 outline-none resize-none min-h-[24px] max-h-[120px] leading-relaxed"
+              rows={1}
+              disabled={isStreaming}
+            />
+            <button
+              onClick={handleSend}
+              disabled={!input.trim() || isStreaming}
+              className="flex-shrink-0 w-8 h-8 rounded-lg bg-ae-blue/80 hover:bg-ae-blue disabled:bg-slate-800/50 disabled:cursor-not-allowed flex items-center justify-center transition-colors"
+              aria-label="Send message"
+            >
+              <svg
+                width="16"
+                height="16"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                className="text-slate-950"
+              >
+                <path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z" />
+              </svg>
+            </button>
+          </div>
+          <div className="flex items-center justify-between mt-2 px-1">
+            <p className="text-[10px] text-slate-400/40">
+              {messageCount}/{MAX_MESSAGES} messages this session
+            </p>
+            <p className="text-[10px] text-slate-400/40">
+              Æ&apos;s system prompt is public.
+            </p>
+          </div>
         </div>
       </div>
     </div>

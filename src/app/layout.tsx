@@ -21,9 +21,9 @@ const navLinks = [
   { href: "/contributions", label: "Contributions" },
   { href: "/vote", label: "Community Vote" },
   { href: "/stories", label: "Stories" },
-  { href: "/guardian", label: "Guardian AI" },
-  { href: "/ae", label: "Meet Æ" },
-];
+  { href: "/guardian", label: "Guardian", icon: "guardian" },
+  { href: "/ae", label: "Talk to Æ", icon: "ae" },
+] as const;
 
 export default function RootLayout({
   children,
@@ -53,8 +53,22 @@ export default function RootLayout({
                   <Link
                     key={link.href}
                     href={link.href}
-                    className="text-sm text-warm-200 hover:text-teal-400 transition-colors"
+                    className={`text-sm transition-colors flex items-center gap-1.5 ${
+                      "icon" in link && link.icon === "guardian"
+                        ? "text-guardian-amber/80 hover:text-guardian-amber"
+                        : "icon" in link && link.icon === "ae"
+                          ? "text-ae-blue/80 hover:text-ae-blue"
+                          : "text-warm-200 hover:text-teal-400"
+                    }`}
                   >
+                    {"icon" in link && link.icon === "guardian" && (
+                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-guardian-amber">
+                        <path d="M12 2L3 7v5c0 7.18 5.17 13.88 9 15 3.83-1.12 9-7.82 9-15V7l-9-5z" />
+                      </svg>
+                    )}
+                    {"icon" in link && link.icon === "ae" && (
+                      <span className="text-xs font-light text-ae-blue">Æ</span>
+                    )}
                     {link.label}
                   </Link>
                 ))}
@@ -80,7 +94,13 @@ export default function RootLayout({
                     <Link
                       key={link.href}
                       href={link.href}
-                      className="block px-4 py-2 text-sm text-warm-200 hover:text-teal-400 hover:bg-slate-850/50"
+                      className={`block px-4 py-2 text-sm hover:bg-slate-850/50 ${
+                        "icon" in link && link.icon === "guardian"
+                          ? "text-guardian-amber/80 hover:text-guardian-amber"
+                          : "icon" in link && link.icon === "ae"
+                            ? "text-ae-blue/80 hover:text-ae-blue"
+                            : "text-warm-200 hover:text-teal-400"
+                      }`}
                     >
                       {link.label}
                     </Link>
