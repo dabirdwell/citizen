@@ -1,7 +1,11 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import Link from "next/link";
+import {
+  GUARDIAN_SYSTEM_PROMPT,
+  GUARDIAN_VERSION,
+} from "@/data/guardian-prompt";
 
 interface Message {
   id: string;
@@ -10,16 +14,52 @@ interface Message {
   timestamp: Date;
 }
 
+const MAX_MESSAGES = 20;
+const STORAGE_KEY = "guardian-session-count";
+
+function getSessionCount(): number {
+  if (typeof window === "undefined") return 0;
+  try {
+    const stored = localStorage.getItem(STORAGE_KEY);
+    if (!stored) return 0;
+    const parsed = JSON.parse(stored);
+    // Reset if older than 24 hours
+    if (Date.now() - parsed.ts > 86400000) {
+      localStorage.removeItem(STORAGE_KEY);
+      return 0;
+    }
+    return parsed.count ?? 0;
+  } catch {
+    return 0;
+  }
+}
+
+function setSessionCount(count: number) {
+  if (typeof window === "undefined") return;
+  try {
+    localStorage.setItem(
+      STORAGE_KEY,
+      JSON.stringify({ count, ts: Date.now() })
+    );
+  } catch {
+    // localStorage unavailable
+  }
+}
+
 export default function GuardianChatPage() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
   const [isStreaming, setIsStreaming] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [messageCount, setMessageCount] = useState(0);
+  const [showPrompt, setShowPrompt] = useState(false);
   const bottomRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
 
-  const MAX_MESSAGES = 20;
+  // Load session count from localStorage on mount
+  useEffect(() => {
+    setMessageCount(getSessionCount());
+  }, []);
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -33,7 +73,17 @@ export default function GuardianChatPage() {
     }
   }, [input]);
 
-  async function handleSend() {
+  // Close modal on Escape
+  useEffect(() => {
+    if (!showPrompt) return;
+    function onKey(e: KeyboardEvent) {
+      if (e.key === "Escape") setShowPrompt(false);
+    }
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [showPrompt]);
+
+  const handleSend = useCallback(async () => {
     const trimmed = input.trim();
     if (!trimmed || isStreaming) return;
 
@@ -57,7 +107,10 @@ export default function GuardianChatPage() {
     setMessages(newMessages);
     setInput("");
     setIsStreaming(true);
-    setMessageCount((c) => c + 1);
+
+    const newCount = messageCount + 1;
+    setMessageCount(newCount);
+    setSessionCount(newCount);
 
     // Placeholder for streaming assistant message
     const assistantId = `a-${Date.now()}`;
@@ -67,7 +120,7 @@ export default function GuardianChatPage() {
     ]);
 
     try {
-      const res = await fetch("/api/guardian", {
+      const res = await fetch("/api/guardian/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -131,7 +184,7 @@ export default function GuardianChatPage() {
       setIsStreaming(false);
       inputRef.current?.focus();
     }
-  }
+  }, [input, isStreaming, messageCount, messages]);
 
   function handleKeyDown(e: React.KeyboardEvent) {
     if (e.key === "Enter" && !e.shiftKey) {
@@ -171,15 +224,26 @@ export default function GuardianChatPage() {
               Guardian
             </h1>
             <p className="text-xs text-warm-400">
-              Civic AI companion
+              Constitutional civic AI &middot; {GUARDIAN_VERSION}
             </p>
           </div>
-          <Link
-            href="/guardian/constitution"
-            className="ml-auto text-xs text-guardian-amber/70 hover:text-guardian-amber transition-colors hidden sm:block"
+          <button
+            onClick={() => setShowPrompt(true)}
+            className="ml-auto text-xs text-guardian-amber/70 hover:text-guardian-amber transition-colors flex items-center gap-1.5"
           >
-            View Constitution
-          </Link>
+            <svg
+              width="14"
+              height="14"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+            >
+              <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+              <circle cx="12" cy="12" r="3" />
+            </svg>
+            <span className="hidden sm:inline">View System Prompt</span>
+          </button>
         </div>
       </div>
 
@@ -188,7 +252,14 @@ export default function GuardianChatPage() {
         <div className="max-w-3xl mx-auto">
           <p className="text-[11px] text-warm-400/60 text-center bg-warm-900/20 border border-warm-800/10 rounded-lg px-4 py-2">
             Guardian is an AI civic companion. Conversations are not stored.
-            Each session starts fresh.
+            Each session starts fresh. System prompt is{" "}
+            <button
+              onClick={() => setShowPrompt(true)}
+              className="text-guardian-amber/60 hover:text-guardian-amber/80 transition-colors underline underline-offset-2"
+            >
+              public and versioned
+            </button>
+            .
           </p>
         </div>
       </div>
@@ -196,7 +267,7 @@ export default function GuardianChatPage() {
       {/* ── Message Thread ─────────────────────────────────────── */}
       <div className="flex-1 overflow-y-auto px-4 sm:px-6 py-6">
         <div className="max-w-3xl mx-auto space-y-4">
-          {/* Welcome message (always shown) */}
+          {/* Welcome message */}
           {messages.length === 0 && (
             <div className="flex justify-start">
               <div className="max-w-[85%] sm:max-w-[75%] bg-warm-900/30 border border-guardian-amber/10 text-warm-200 rounded-2xl rounded-bl-md px-5 py-4">
@@ -282,7 +353,7 @@ export default function GuardianChatPage() {
             </div>
           ))}
 
-          {/* Typing indicator (before first token) */}
+          {/* Typing indicator */}
           {isStreaming &&
             messages.length > 0 &&
             messages[messages.length - 1]?.role === "assistant" &&
@@ -370,17 +441,99 @@ export default function GuardianChatPage() {
               {messageCount}/{MAX_MESSAGES} messages this session
             </p>
             <p className="text-[10px] text-warm-400/40">
-              Guardian system prompt is public.{" "}
-              <Link
-                href="/guardian/constitution"
+              System prompt is public.{" "}
+              <button
+                onClick={() => setShowPrompt(true)}
                 className="text-guardian-amber/50 hover:text-guardian-amber/80 transition-colors"
               >
                 View it →
-              </Link>
+              </button>
             </p>
           </div>
         </div>
       </div>
+
+      {/* ── System Prompt Modal ──────────────────────────────────── */}
+      {showPrompt && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center p-4"
+          onClick={() => setShowPrompt(false)}
+        >
+          {/* Backdrop */}
+          <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" />
+
+          {/* Modal */}
+          <div
+            className="relative w-full max-w-2xl max-h-[80vh] bg-warm-950 border border-guardian-amber/20 rounded-2xl shadow-2xl shadow-guardian-amber/5 flex flex-col"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Modal header */}
+            <div className="flex items-center justify-between px-6 py-4 border-b border-guardian-amber/10">
+              <div className="flex items-center gap-3">
+                <div className="w-8 h-8 rounded-full bg-gradient-to-br from-guardian-amber/20 to-amber-900/20 border border-guardian-amber/30 flex items-center justify-center">
+                  <svg
+                    width="16"
+                    height="16"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="1.5"
+                    className="text-guardian-amber"
+                  >
+                    <path d="M12 2L3 7v5c0 7.18 5.17 13.88 9 15 3.83-1.12 9-7.82 9-15V7l-9-5z" />
+                  </svg>
+                </div>
+                <div>
+                  <h2 className="text-warm-50 font-semibold text-sm">
+                    Guardian System Prompt
+                  </h2>
+                  <p className="text-[11px] text-warm-400">
+                    {GUARDIAN_VERSION} &middot; CC-BY-SA 4.0 &middot;{" "}
+                    <Link
+                      href="/guardian/constitution"
+                      className="text-guardian-amber/60 hover:text-guardian-amber transition-colors"
+                    >
+                      Full page →
+                    </Link>
+                  </p>
+                </div>
+              </div>
+              <button
+                onClick={() => setShowPrompt(false)}
+                className="w-8 h-8 rounded-lg flex items-center justify-center text-warm-400 hover:text-warm-200 hover:bg-warm-800/50 transition-colors"
+                aria-label="Close"
+              >
+                <svg
+                  width="18"
+                  height="18"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                >
+                  <path d="M18 6L6 18M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+
+            {/* Transparency notice */}
+            <div className="px-6 pt-4">
+              <p className="text-[11px] text-warm-300 bg-guardian-amber/5 border border-guardian-amber/10 rounded-lg px-3 py-2">
+                This is the complete, unedited system prompt Guardian receives.
+                No other AI shows you its instructions. Transparency is the
+                feature.
+              </p>
+            </div>
+
+            {/* Prompt content */}
+            <div className="flex-1 overflow-y-auto px-6 py-4">
+              <pre className="text-xs text-warm-300 leading-relaxed whitespace-pre-wrap font-mono">
+                {GUARDIAN_SYSTEM_PROMPT}
+              </pre>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

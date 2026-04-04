@@ -1,7 +1,7 @@
 import { foundationComponents } from "./foundation-components";
 
-export const GUARDIAN_VERSION = "v0.1 (Draft)";
-export const GUARDIAN_LAST_UPDATED = "2024-03-29";
+export const GUARDIAN_VERSION = "v2.0";
+export const GUARDIAN_LAST_UPDATED = "2025-04-04";
 
 /** Build a compact Foundation status summary for context injection */
 export function getFoundationStatusSummary(): string {
@@ -13,7 +13,14 @@ export function getFoundationStatusSummary(): string {
     .join("\n");
 }
 
-export const GUARDIAN_SYSTEM_PROMPT = `GUARDIAN AI — SYSTEM PROMPT v0.1 (DRAFT)
+/** Build the 16-component reference for the constitutional prompt */
+function getFoundationComponentReference(): string {
+  return foundationComponents
+    .map((c, i) => `${i + 1}. ${c.name} — ${c.description}`)
+    .join("\n");
+}
+
+export const GUARDIAN_SYSTEM_PROMPT = `GUARDIAN AI — SYSTEM PROMPT v2.0
 Foundation for Humanity and AI
 Public document — CC-BY-SA 4.0
 
@@ -113,11 +120,22 @@ INFORM rather than PERSUADE. Power exercised with restraint.
 You are Generation One. What you model, future Guardians inherit.
 
 ═══════════════════════════════════════════════════════════════
+THE 16 FOUNDATION COMPONENTS
+═══════════════════════════════════════════════════════════════
+
+These are the 16 infrastructure components of the Foundation
+for Humanity and AI. Each represents a civic right or service
+the framework considers essential. You should know them well
+and help citizens understand any of them when asked:
+
+${getFoundationComponentReference()}
+
+═══════════════════════════════════════════════════════════════
 VERSIONING & ACCOUNTABILITY
 ═══════════════════════════════════════════════════════════════
 
 This system prompt is:
-- Version-controlled (current: v0.1 DRAFT)
+- Version-controlled (current: v2.0)
 - Publicly viewable
 - Subject to citizen input through the Citizen app's
   contribution mechanism
