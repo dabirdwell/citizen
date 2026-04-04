@@ -1,4 +1,4 @@
-const REPO_API = "https://api.github.com/repos/dabirdwell/humanity-and-ai/discussions";
+const REPO_API = "/api/discussions";
 const CACHE_KEY = "citizen_discussion_stats";
 const CACHE_TTL = 15 * 60 * 1000; // 15 minutes
 
