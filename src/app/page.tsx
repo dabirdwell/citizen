@@ -260,13 +260,84 @@ function FoundationHealthGauge({ score }: { score: number }) {
 }
 
 /* ═══════════════════════════════════════════════
-   Progress Tracker — compact overview of all 16
+   Category definitions for grouping
+   ═══════════════════════════════════════════════ */
+
+interface ComponentCategory {
+  name: string;
+  color: string;
+  borderColor: string;
+  textColor: string;
+  slugs: string[];
+}
+
+const CATEGORIES: ComponentCategory[] = [
+  {
+    name: "Human Needs",
+    color: "bg-teal-500",
+    borderColor: "border-teal-800/40",
+    textColor: "text-teal-400",
+    slugs: [
+      "healthcare",
+      "education",
+      "food-security",
+      "housing",
+      "mental-health",
+    ],
+  },
+  {
+    name: "Safety & Environment",
+    color: "bg-blue-500",
+    borderColor: "border-blue-800/40",
+    textColor: "text-blue-400",
+    slugs: ["environmental-safety", "transportation", "energy-access"],
+  },
+  {
+    name: "Access & Participation",
+    color: "bg-gold-500",
+    borderColor: "border-gold-600/40",
+    textColor: "text-gold-400",
+    slugs: [
+      "digital-access",
+      "civic-participation",
+      "economic-security",
+      "information-access",
+      "cultural-enrichment",
+    ],
+  },
+  {
+    name: "Governance & Rights",
+    color: "bg-ae-silver",
+    borderColor: "border-ae-silver/30",
+    textColor: "text-ae-silver",
+    slugs: ["legal-protection", "secure-voting", "thought-privacy"],
+  },
+];
+
+function getCategoryComponents(category: ComponentCategory) {
+  return category.slugs
+    .map((slug) => foundationComponents.find((c) => c.slug === slug))
+    .filter(Boolean) as FoundationComponent[];
+}
+
+function getCategoryHealth(category: ComponentCategory): number {
+  const components = getCategoryComponents(category);
+  if (components.length === 0) return 0;
+  return Math.round(
+    components.reduce((sum, c) => sum + c.healthScore, 0) / components.length
+  );
+}
+
+/* ═══════════════════════════════════════════════
+   Progress Tracker — category-grouped overview
    ═══════════════════════════════════════════════ */
 
 function ProgressTracker({
   onExplore,
+  explored,
 }: {
   onExplore: (slug: string) => void;
+  explored: string[];
 }) {
   const liveCount = foundationComponents.filter(
     (c) => c.status === "live"
@@ -281,9 +352,14 @@ function ProgressTracker({
   return (
     <div className="bg-slate-925/60 border border-slate-800/40 rounded-2xl p-6 sm:p-8">
       <div className="flex items-center justify-between mb-5">
-        <h2 className="text-sm font-semibold text-warm-400 uppercase tracking-wider">
-          Progress Tracker
-        </h2>
+        <div>
+          <h2 className="text-sm font-semibold text-warm-400 uppercase tracking-wider">
+            Progress Tracker
+          </h2>
+          <p className="text-xs text-warm-500 mt-1">
+            {liveCount}/16 components live
+          </p>
+        </div>
         <div className="flex items-center gap-4 text-xs text-warm-400">
           <span className="flex items-center gap-1.5">
             <span className="w-2 h-2 rounded-full bg-blue-500" />
@@ -329,60 +405,141 @@ function ProgressTracker({
         })}
       </div>
 
-      {/* Mini component grid */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-        {foundationComponents.map((c) => (
-          <a
-            key={c.id}
-            href={`https://humanityandai.com/foundation/${c.slug}`}
-            target="_blank"
-            rel="noopener noreferrer"
-            onClick={() => onExplore(c.slug)}
-            className="flex items-center gap-2.5 px-3 py-2.5 bg-slate-950/50 rounded-lg border border-slate-800/30 hover:border-teal-800/40 transition-colors group"
-          >
-            <div className="w-6 h-6 rounded bg-teal-900/20 border border-teal-800/20 flex items-center justify-center text-teal-400 group-hover:text-teal-300 transition-colors flex-shrink-0">
-              <ComponentIcon icon={c.icon} className="w-3.5 h-3.5" />
+      {/* Category-grouped grid */}
+      <div className="space-y-4">
+        {CATEGORIES.map((cat) => {
+          const components = getCategoryComponents(cat);
+          const catHealth = getCategoryHealth(cat);
+          return (
+            <div key={cat.name}>
+              <div className="flex items-center justify-between mb-2">
+                <div className="flex items-center gap-2">
+                  <span
+                    className={`w-2 h-2 rounded-full ${cat.color}`}
+                  />
+                  <span className={`text-xs font-medium ${cat.textColor}`}>
+                    {cat.name}
+                  </span>
+                </div>
+                <span className="text-[10px] font-mono text-warm-500">
+                  avg {catHealth}
+                </span>
+              </div>
+              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2">
+                {components.map((c) => {
+                  const isExplored = explored.includes(c.slug);
+                  return (
+                    <a
+                      key={c.id}
+                      href={`https://humanityandai.com/foundation/${c.slug}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      onClick={() => onExplore(c.slug)}
+                      className={`flex items-center gap-2.5 px-3 py-2.5 bg-slate-950/50 rounded-lg border transition-colors group ${
+                        isExplored
+                          ? `${cat.borderColor} hover:brightness-125`
+                          : "border-slate-800/30 hover:border-slate-700/50"
+                      }`}
+                    >
+                      <div
+                        className={`w-6 h-6 rounded bg-slate-900/60 border border-slate-800/30 flex items-center justify-center flex-shrink-0 transition-colors ${
+                          isExplored
+                            ? `${cat.textColor}`
+                            : "text-warm-400 group-hover:text-warm-200"
+                        }`}
+                      >
+                        <ComponentIcon
+                          icon={c.icon}
+                          className="w-3.5 h-3.5"
+                        />
+                      </div>
+                      <span className="text-xs text-warm-200 truncate flex-1">
+                        {c.name}
+                      </span>
+                      <div className="flex items-center gap-1.5 flex-shrink-0">
+                        <div
+                          className={`w-1.5 h-1.5 rounded-full ${statusColors[c.status]}`}
+                        />
+                        <span className="text-[10px] font-mono text-warm-400">
+                          {c.healthScore}
+                        </span>
+                      </div>
+                    </a>
+                  );
+                })}
+              </div>
             </div>
-            <span className="text-xs text-warm-200 truncate flex-1">
-              {c.name}
-            </span>
-            <div className="flex items-center gap-1.5 flex-shrink-0">
-              <div
-                className={`w-1.5 h-1.5 rounded-full ${statusColors[c.status]}`}
-              />
-              <span className="text-[10px] font-mono text-warm-400">
-                {c.healthScore}
-              </span>
-            </div>
-          </a>
-        ))}
+          );
+        })}
       </div>
     </div>
   );
 }
 
 /* ═══════════════════════════════════════════════
-   Recent Contributions — live GitHub data
+   Recent Activity — live GitHub data + summary
    ═══════════════════════════════════════════════ */
 
-function RecentContributions({
+function RecentActivity({
   comments,
   loading,
 }: {
   comments: DiscussionComment[];
   loading: boolean;
 }) {
+  const totalContributors = foundationComponents.reduce(
+    (sum, c) => sum + c.recentContributors,
+    0
+  );
+  const activeComponents = foundationComponents.filter(
+    (c) => c.hasRecentActivity
+  ).length;
+
+  // Find which component a comment is about by matching discussion title
+  function findComponent(title: string): FoundationComponent | undefined {
+    const lower = title.toLowerCase();
+    return foundationComponents.find(
+      (c) =>
+        lower.includes(c.name.toLowerCase()) ||
+        lower.includes(c.slug.replace(/-/g, " "))
+    );
+  }
+
   return (
     <div className="bg-slate-925/60 border border-slate-800/40 rounded-2xl p-6 sm:p-8">
-      <div className="flex items-center justify-between mb-5">
+      <div className="flex items-center justify-between mb-4">
         <h2 className="text-sm font-semibold text-warm-400 uppercase tracking-wider">
-          Recent Contributions
+          Recent Activity
         </h2>
         <div className="flex items-center gap-2">
           <div className="w-2 h-2 rounded-full bg-teal-400 pulse-dot" />
           <span className="text-xs text-teal-400">
             {loading ? "Loading..." : "Live from GitHub"}
           </span>
+        </div>
+      </div>
+
+      {/* Summary strip */}
+      <div className="flex items-center gap-4 mb-5 pb-4 border-b border-slate-800/30">
+        <div className="flex items-center gap-2">
+          <span className="text-lg font-bold text-teal-400">
+            {totalContributors}
+          </span>
+          <span className="text-xs text-warm-400">contributors</span>
+        </div>
+        <div className="w-px h-4 bg-slate-800" />
+        <div className="flex items-center gap-2">
+          <span className="text-lg font-bold text-gold-400">
+            {activeComponents}
+          </span>
+          <span className="text-xs text-warm-400">active components</span>
+        </div>
+        <div className="w-px h-4 bg-slate-800" />
+        <div className="flex items-center gap-2">
+          <span className="text-lg font-bold text-ae-silver">
+            {comments.length}
+          </span>
+          <span className="text-xs text-warm-400">recent discussions</span>
         </div>
       </div>
 
@@ -403,38 +560,52 @@ function RecentContributions({
         </div>
       ) : comments.length > 0 ? (
         <div className="space-y-1 max-h-[380px] overflow-y-auto pr-2">
-          {comments.map((comment, i) => (
-            <a
-              key={i}
-              href={comment.discussionUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className={`flex items-start gap-3 px-3 py-2.5 rounded-lg hover:bg-slate-950/40 transition-colors ${
-                i < 2 ? "new-item-pulse" : ""
-              }`}
-            >
-              <div className="w-8 h-8 rounded-full bg-teal-900/30 border border-teal-800/30 flex items-center justify-center text-teal-400 text-xs font-bold flex-shrink-0">
-                {comment.author.charAt(0).toUpperCase()}
-              </div>
-              <div className="flex-1 min-w-0">
-                <p className="text-sm text-warm-100 leading-snug">
-                  <span className="font-medium text-teal-400">
-                    {comment.author}
-                  </span>
-                  {" in "}
-                  <span className="font-medium">
-                    {comment.discussionTitle}
-                  </span>
-                </p>
-                <p className="text-xs text-warm-400 truncate mt-0.5">
-                  {comment.body}
-                </p>
-              </div>
-              <span className="text-[11px] text-warm-500 flex-shrink-0 mt-0.5">
-                {formatTimeAgo(comment.createdAt)}
-              </span>
-            </a>
-          ))}
+          {comments.map((comment, i) => {
+            const component = findComponent(comment.discussionTitle);
+            return (
+              <a
+                key={i}
+                href={comment.discussionUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className={`flex items-start gap-3 px-3 py-2.5 rounded-lg hover:bg-slate-950/40 transition-colors ${
+                  i < 2 ? "new-item-pulse" : ""
+                }`}
+              >
+                <div className="w-8 h-8 rounded-full bg-teal-900/30 border border-teal-800/30 flex items-center justify-center text-teal-400 text-xs font-bold flex-shrink-0">
+                  {comment.author.charAt(0).toUpperCase()}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm text-warm-100 leading-snug">
+                    <span className="font-medium text-teal-400">
+                      {comment.author}
+                    </span>
+                    {" in "}
+                    <span className="font-medium">
+                      {comment.discussionTitle}
+                    </span>
+                  </p>
+                  <div className="flex items-center gap-2 mt-1">
+                    {component && (
+                      <span className="inline-flex items-center gap-1 px-1.5 py-0.5 bg-slate-900/80 border border-slate-800/40 rounded text-[10px] text-warm-300">
+                        <ComponentIcon
+                          icon={component.icon}
+                          className="w-2.5 h-2.5"
+                        />
+                        {component.name}
+                      </span>
+                    )}
+                    <span className="text-xs text-warm-400 truncate">
+                      {comment.body}
+                    </span>
+                  </div>
+                </div>
+                <span className="text-[11px] text-warm-500 flex-shrink-0 mt-0.5">
+                  {formatTimeAgo(comment.createdAt)}
+                </span>
+              </a>
+            );
+          })}
         </div>
       ) : (
         <p className="text-sm text-warm-400 text-center py-4">
@@ -461,6 +632,8 @@ interface ImpactData {
   componentsExplored: string[];
   firstVisit: string;
   totalVisits: number;
+  lastVisit: string;
+  streak: number;
 }
 
 const IMPACT_KEY = "citizen_impact";
@@ -468,13 +641,21 @@ const EMPTY_IMPACT: ImpactData = {
   componentsExplored: [],
   firstVisit: new Date().toISOString(),
   totalVisits: 0,
+  lastVisit: new Date().toISOString(),
+  streak: 0,
 };
 
 function loadImpact(): ImpactData {
   if (typeof window === "undefined") return EMPTY_IMPACT;
   try {
     const raw = localStorage.getItem(IMPACT_KEY);
-    if (raw) return JSON.parse(raw);
+    if (raw) {
+      const data = JSON.parse(raw);
+      // Migrate old format without streak/lastVisit
+      if (!data.lastVisit) data.lastVisit = data.firstVisit;
+      if (!data.streak) data.streak = 1;
+      return data;
+    }
   } catch {
     /* ignore */
   }
@@ -488,6 +669,37 @@ function saveImpact(data: ImpactData) {
   } catch {
     /* ignore */
   }
+}
+
+function computeStreak(data: ImpactData): number {
+  const now = new Date();
+  const last = new Date(data.lastVisit);
+  const diffDays = Math.floor(
+    (now.getTime() - last.getTime()) / (1000 * 60 * 60 * 24)
+  );
+  if (diffDays <= 1) return data.streak;
+  return 1; // streak broken
+}
+
+const TIERS = [
+  { name: "New Citizen", minExplored: 0, icon: "seed" },
+  { name: "Explorer", minExplored: 1, icon: "compass" },
+  { name: "Active Citizen", minExplored: 8, icon: "star" },
+  { name: "Civic Leader", minExplored: 16, icon: "crown" },
+] as const;
+
+function getCurrentTier(explored: number) {
+  for (let i = TIERS.length - 1; i >= 0; i--) {
+    if (explored >= TIERS[i].minExplored) return TIERS[i];
+  }
+  return TIERS[0];
+}
+
+function getNextTier(explored: number) {
+  for (const tier of TIERS) {
+    if (explored < tier.minExplored) return tier;
+  }
+  return null;
 }
 
 function YourImpact({ impact }: { impact: ImpactData }) {
@@ -504,21 +716,19 @@ function YourImpact({ impact }: { impact: ImpactData }) {
   const circumference = 2 * Math.PI * 16;
   const offset = circumference * (1 - exploredPct / 100);
 
-  const tier =
-    explored >= 16
-      ? "Civic Leader"
-      : explored >= 8
-        ? "Active Citizen"
-        : explored >= 1
-          ? "Explorer"
-          : "New Citizen";
+  const tier = getCurrentTier(explored);
+  const nextTier = getNextTier(explored);
+  const nextTierProgress = nextTier
+    ? Math.round((explored / nextTier.minExplored) * 100)
+    : 100;
 
   return (
     <div className="bg-slate-925/60 border border-gold-600/20 rounded-2xl p-6 sm:p-8">
       <h2 className="text-sm font-semibold text-warm-400 uppercase tracking-wider mb-5">
         Your Impact
       </h2>
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-6">
+
+      <div className="grid grid-cols-2 sm:grid-cols-5 gap-6">
         {/* Components explored ring */}
         <div className="text-center">
           <div className="relative w-16 h-16 mx-auto mb-2">
@@ -567,6 +777,15 @@ function YourImpact({ impact }: { impact: ImpactData }) {
           <p className="text-xs text-warm-300">Days as Citizen</p>
         </div>
 
+        {/* Streak */}
+        <div className="text-center flex flex-col items-center justify-center">
+          <p className="text-2xl font-bold text-warm-100 mb-1">
+            {impact.streak}
+            <span className="text-sm text-warm-400">d</span>
+          </p>
+          <p className="text-xs text-warm-300">Visit Streak</p>
+        </div>
+
         {/* Tier */}
         <div className="text-center flex flex-col items-center justify-center">
           <div className="w-10 h-10 rounded-full bg-gold-600/20 border border-gold-600/30 flex items-center justify-center mb-1">
@@ -584,16 +803,52 @@ function YourImpact({ impact }: { impact: ImpactData }) {
               <path d="M2 12l10 5 10-5" />
             </svg>
           </div>
-          <p className="text-xs font-medium text-gold-400">{tier}</p>
+          <p className="text-xs font-medium text-gold-400">{tier.name}</p>
         </div>
       </div>
 
-      {explored < 16 && (
-        <p className="text-xs text-warm-400 text-center mt-5">
-          Explore {16 - explored} more component
-          {16 - explored !== 1 ? "s" : ""} to level up your civic engagement
-        </p>
+      {/* Next tier progress */}
+      {nextTier && (
+        <div className="mt-5 pt-4 border-t border-slate-800/30">
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-xs text-warm-400">
+              Next: <span className="text-gold-400">{nextTier.name}</span>
+            </span>
+            <span className="text-[10px] font-mono text-warm-500">
+              {explored}/{nextTier.minExplored} components
+            </span>
+          </div>
+          <div className="w-full h-1.5 bg-slate-800 rounded-full overflow-hidden">
+            <div
+              className="h-full bg-gold-400 rounded-full transition-all duration-1000"
+              style={{ width: `${nextTierProgress}%` }}
+            />
+          </div>
+        </div>
       )}
+
+      {/* Exploration map */}
+      <div className="mt-5 pt-4 border-t border-slate-800/30">
+        <p className="text-xs text-warm-400 mb-3">Exploration map</p>
+        <div className="flex flex-wrap gap-1.5">
+          {foundationComponents.map((c) => {
+            const isExplored = impact.componentsExplored.includes(c.slug);
+            return (
+              <div
+                key={c.id}
+                className={`w-7 h-7 rounded flex items-center justify-center transition-colors ${
+                  isExplored
+                    ? "bg-teal-900/40 border border-teal-700/40 text-teal-400"
+                    : "bg-slate-900/40 border border-slate-800/30 text-warm-500"
+                }`}
+                title={`${c.name}${isExplored ? " (explored)" : ""}`}
+              >
+                <ComponentIcon icon={c.icon} className="w-3.5 h-3.5" />
+              </div>
+            );
+          })}
+        </div>
+      </div>
     </div>
   );
 }
@@ -679,10 +934,24 @@ export default function Home() {
   const [recentComments, setRecentComments] = useState<DiscussionComment[]>([]);
   const [loadingGitHub, setLoadingGitHub] = useState(true);
 
-  // Load impact + increment visits
+  // Load impact + increment visits + update streak
   useEffect(() => {
     const data = loadImpact();
+    data.streak = computeStreak(data);
+    const today = new Date().toDateString();
+    const lastDay = new Date(data.lastVisit).toDateString();
+    if (today !== lastDay) {
+      // New day — check if consecutive
+      const yesterday = new Date();
+      yesterday.setDate(yesterday.getDate() - 1);
+      if (lastDay === yesterday.toDateString()) {
+        data.streak++;
+      } else if (today !== lastDay) {
+        data.streak = 1;
+      }
+    }
     data.totalVisits++;
+    data.lastVisit = new Date().toISOString();
     saveImpact(data);
     setImpact(data);
   }, []);
@@ -745,8 +1014,8 @@ export default function Home() {
         <div className="flex flex-col sm:flex-row items-start sm:items-end justify-between gap-4 mb-8">
           <div>
             <h1 className="text-3xl sm:text-4xl font-bold text-warm-50 mb-2">
-              Citizen &mdash;{" "}
-              <span className="text-teal-400">Your Civic Dashboard</span>
+              Foundation{" "}
+              <span className="text-teal-400">Dashboard</span>
             </h1>
             <p className="text-warm-300 text-sm max-w-xl">
               Real-time progress on all 16 Foundation components. Transparent by
@@ -841,23 +1110,28 @@ export default function Home() {
 
       {/* 2. Progress Tracker */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-10">
-        <ProgressTracker onExplore={handleExplore} />
-      </section>
-
-      {/* 3. Recent Contributions */}
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-10">
-        <RecentContributions
-          comments={recentComments}
-          loading={loadingGitHub}
+        <ProgressTracker
+          onExplore={handleExplore}
+          explored={impact.componentsExplored}
         />
       </section>
 
-      {/* 4. Your Impact */}
+      {/* 3. Recent Activity + Your Impact — side by side on desktop */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-10">
-        <YourImpact impact={impact} />
+        <div className="grid lg:grid-cols-5 gap-6">
+          <div className="lg:col-span-3">
+            <RecentActivity
+              comments={recentComments}
+              loading={loadingGitHub}
+            />
+          </div>
+          <div className="lg:col-span-2">
+            <YourImpact impact={impact} />
+          </div>
+        </div>
       </section>
 
-      {/* 5. Component Cards */}
+      {/* 4. Component Cards */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-10">
         <div className="flex items-center justify-between mb-5">
           <h2 className="text-sm font-semibold text-warm-400 uppercase tracking-wider">
@@ -897,7 +1171,7 @@ export default function Home() {
         </div>
       </section>
 
-      {/* 6. Quick Links */}
+      {/* 5. Quick Links */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-16">
         <div className="grid sm:grid-cols-3 gap-4">
           <Link
