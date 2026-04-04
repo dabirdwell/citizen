@@ -16,7 +16,7 @@ export const metadata: Metadata = {
 };
 
 const navLinks = [
-  { href: "/", label: "Dashboard" },
+  { href: "/foundation", label: "Dashboard" },
   { href: "/contribute", label: "Contribute" },
   { href: "/contributions", label: "Contributions" },
   { href: "/vote", label: "Community Vote" },
