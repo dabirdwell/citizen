@@ -205,3 +205,36 @@ None block a build; all are addressable incrementally.
 | `node --test "tests/*.test.mts"` | 36/36 | **58/58** |
 
 No source behavior was changed. Main advances on green.
+
+---
+
+## 6. Remediation pass (2026-06-30, overnight) — applied vs. deferred
+
+A follow-up overnight pass applied **only** the findings that are clearly safe
+and additive per the sprint safety envelope. Full details in
+`SPRINT_REPORT_citizen-remediation.md`.
+
+### Applied
+
+| Finding | Change | Why safe |
+| --- | --- | --- |
+| **M4** — no `test` script | Added `"test": "node --test \"tests/*.test.mts\""` to `package.json` | Pure addition; makes the existing suite discoverable to CI/contributors. The audit's #1 recommendation. |
+| **L1** — negative relative-time output | Clamped elapsed span with `Math.max(0, …)` in `formatTimeAgo` (`src/lib/github-discussions.ts`) and `formatRelativeTime` (`src/data/activity-feed.ts`) | Minimal, clearly-correct one-line-each fix; a future/clock-skewed timestamp now reads as the smallest bucket instead of `"-3m ago"`. Locked by 6 new tests in `tests/time-clamp.test.mts`; existing past-date behavior unchanged and regression-guarded. |
+
+Regression gate after this pass: `npm run build` ✓ · `npm run lint` ✓ ·
+`npm test` **64/64** (was 58; +6 in `time-clamp.test.mts`).
+
+### Deferred (and why)
+
+| Finding | Why deferred |
+| --- | --- |
+| **H1** — LLM abuse/cost protection | Requires product judgment + infra (per-IP throttle, KV/Upstash) and touches request-handling of paid endpoints. Out of an additive/no-risk envelope. |
+| **H2** — top-level `new Anthropic()` | Touches auth/API-key handling and request control flow. Excluded by the "do not touch auth" safety rule. |
+| **H3** — dependency vulns | Dependency bumps are potentially breaking (`next@16` major); changing lockfile/deps is outside "additive and clearly-correct." |
+| **M1** — three divergent taxonomies | Reconciliation needs a product decision on the canonical source; already pinned by `taxonomy-divergence.test.mts`. |
+| **M2** — streak double-logic | Risky core dashboard logic; collapsing the two rules is a behavior change requiring product judgment. |
+| **M3** — extract dashboard metrics | Would require modifying `foundation/page.tsx` (moving un-exported logic). A refactor of core rendering logic — beyond a clearly-correct additive edit. |
+| **L2** — "comments" naming | Naming/product judgment; no correctness bug. |
+| **L3** — dated model ids | Product/cost decision on model selection. |
+| **L4** — repo clutter (`node_modules 2/`, `.vercel/`) | Deleting files outside scratch is barred by the safety rule. Verified neither is tracked in git (`git ls-files` empty for both): `.vercel` is `.gitignore`d; `node_modules 2/` is untracked-but-not-ignored (the `/node_modules` rule is root-anchored to the exact name), so it never reaches a commit. Left in place. |
+| **L5** — accessibility | Broad, cross-component UI changes; higher blast radius than an additive pass allows. |

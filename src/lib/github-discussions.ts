@@ -142,7 +142,8 @@ export async function getDiscussionStats(): Promise<{
 export function formatTimeAgo(dateStr: string): string {
   const now = Date.now();
   const then = new Date(dateStr).getTime();
-  const diffMs = now - then;
+  // Clamp so future/clock-skewed timestamps never render negative ("-3m ago").
+  const diffMs = Math.max(0, now - then);
   const minutes = Math.floor(diffMs / 60000);
   if (minutes < 60) return `${minutes}m ago`;
   const hours = Math.floor(minutes / 60);

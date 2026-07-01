@@ -36,7 +36,8 @@ export const activityFeed: ActivityItem[] = [
 
 export function formatRelativeTime(date: Date): string {
   const now = new Date();
-  const diffMs = now.getTime() - date.getTime();
+  // Clamp so future/clock-skewed timestamps never render negative ("-3m ago").
+  const diffMs = Math.max(0, now.getTime() - date.getTime());
   const diffMins = Math.floor(diffMs / (1000 * 60));
   const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
   const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
