@@ -362,11 +362,14 @@ function StepShare({
 
 function StepConfirmation({
   component,
+  submittedText,
   onStartOver,
 }: {
   component: WizardComponent;
+  submittedText: string;
   onStartOver: () => void;
 }) {
+  const words = submittedText.trim();
   return (
     <div className="wizard-fade-in max-w-2xl mx-auto text-center">
       <div className="mb-6">
@@ -383,6 +386,21 @@ function StepConfirmation({
           received. Every contribution moves the Foundation forward.
         </p>
       </div>
+
+      {words && (
+        <div className="bg-slate-925/80 border border-warm-800/20 rounded-2xl p-6 sm:p-8 mb-8 text-left">
+          <p className="text-[11px] text-warm-500 uppercase tracking-wider mb-4 text-center">
+            Your voice, returned to you
+          </p>
+          <div className="relative">
+            <div className="absolute -top-2 -left-1 text-4xl text-gold-500/30 leading-none select-none">&ldquo;</div>
+            <p className="text-warm-200 leading-relaxed text-base sm:text-lg italic pl-6 pr-2 whitespace-pre-wrap">
+              {words}
+            </p>
+            <div className="absolute -bottom-4 right-0 text-4xl text-gold-500/30 leading-none select-none">&rdquo;</div>
+          </div>
+        </div>
+      )}
 
       <div className="bg-slate-925/80 border border-teal-800/20 rounded-2xl p-6 sm:p-8 mb-8">
         <p className="text-warm-300 text-sm mb-4">
@@ -427,8 +445,7 @@ function StepConfirmation({
 export default function ContributeWizard() {
   const [step, setStep] = useState(0);
   const [selected, setSelected] = useState<WizardComponent | null>(null);
-  // Will be POSTed to Formspree in a future iteration
-  const [, setSubmittedText] = useState("");
+  const [submittedText, setSubmittedText] = useState("");
 
   function handleSelect(c: WizardComponent) {
     setSelected(c);
@@ -441,8 +458,6 @@ export default function ContributeWizard() {
 
   function handleSubmit(text: string) {
     setSubmittedText(text);
-    // In the future, this will POST to Formspree.
-    // For now, go straight to confirmation.
     setStep(3);
   }
 
@@ -491,6 +506,7 @@ export default function ContributeWizard() {
         {step === 3 && selected && (
           <StepConfirmation
             component={selected}
+            submittedText={submittedText}
             onStartOver={handleStartOver}
           />
         )}
